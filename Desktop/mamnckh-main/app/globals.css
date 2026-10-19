@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-moss-50: #f4f8f1;
+  --color-moss-100: #e4efdd;
+  --color-moss-500: #54885f;
+  --color-moss-600: #3f704d;
+  --color-moss-700: #315a3e;
+  --color-ink: #183027;
+  --color-sand: #fbfaf7;
+  --shadow-soft: 0 14px 35px rgba(33, 71, 48, 0.10);
+}
+
+:root {
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #fbfaf7;
+  color: #183027;
+}
+
+button, input, textarea { font: inherit; }
+
+:focus-visible {
+  outline: 3px solid #315a3e;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.page-shell { @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8; }
+.eyebrow { @apply text-sm font-bold uppercase tracking-[0.18em] text-moss-700; }
+.card { @apply rounded-3xl border border-moss-100 bg-white shadow-soft; }
+.button-primary { @apply inline-flex items-center justify-center rounded-full bg-moss-700 px-5 py-3 font-bold text-white transition hover:bg-moss-600; }
+.button-secondary { @apply inline-flex items-center justify-center rounded-full border border-moss-600 bg-white px-5 py-3 font-bold text-moss-700 transition hover:bg-moss-50; }
+.button-danger { @apply inline-flex items-center justify-center rounded-full bg-[#9d403f] px-5 py-3 font-bold text-white transition hover:bg-[#813331]; }

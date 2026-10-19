@@ -1,0 +1,34 @@
+{
+  "schoolName": "",
+  "homeroomTeacher": {
+    "label": "GVCN",
+    "name": "",
+    "phone": "",
+    "email": "",
+    "availability": ""
+  },
+  "schoolCounselor": {
+    "label": "Người phụ trách tư vấn học đường",
+    "name": "",
+    "phone": "",
+    "email": "",
+    "location": "",
+    "availability": ""
+  },
+  "schoolSupportRoom": {
+    "label": "Phòng tư vấn học đường",
+    "location": "",
+    "availability": ""
+  },
+  "emergencyContact": {
+    "label": "Đầu mối khẩn cấp của trường",
+    "phone": ""
+  },
+  "nearbyMedicalFacility": {
+    "label": "Cơ sở y tế gần trường",
+    "name": "",
+    "location": ""
+  },
+  "escalationInstructions": "",
+  "lastVerifiedAt": ""
+}

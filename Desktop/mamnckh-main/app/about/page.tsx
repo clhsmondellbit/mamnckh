@@ -1,0 +1,5 @@
+import Link from 'next/link';
+
+export default function AboutPage() {
+  return <div className="page-shell py-10 sm:py-14"><article className="mx-auto max-w-3xl"><p className="eyebrow">Về MẦM</p><h1 className="mt-2 text-3xl font-extrabold text-ink">Một chiếc cầu để bắt đầu tìm hỗ trợ</h1><p className="mt-5 leading-8 text-slate-700">MẦM — AI Đồng Hành Học Đường — hỗ trợ học sinh THPT nói về những khó khăn trong học tập, các mối quan hệ, gia đình, cảm xúc, mạng xã hội và hướng đi của bản thân. MẦM ưu tiên lắng nghe, làm rõ và cùng bạn chọn một bước nhỏ thực tế.</p><div className="card mt-7 p-6"><p className="font-bold text-ink">Nguyên tắc của MẦM</p><p className="mt-3 text-lg font-bold text-moss-700">AN TOÀN → LẮNG NGHE → HIỂU VẤN ĐỀ → ĐỊNH HƯỚNG → KẾT NỐI NGƯỜI THẬT</p></div><p className="mt-7 leading-8 text-slate-700">MẦM không phải AI bác sĩ tâm lý, không chẩn đoán và không thay thế giáo viên, cha mẹ/người chăm sóc, chuyên viên tư vấn, bác sĩ hay hỗ trợ khẩn cấp. Khi có nguy cơ hoặc điều vượt quá khả năng của AI, con người và sự an toàn luôn được ưu tiên.</p><Link href="/chat" className="button-primary mt-8">Bắt đầu một cuộc trò chuyện</Link></article></div>;
+}
