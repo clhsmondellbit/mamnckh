@@ -2,14 +2,14 @@ import Link from 'next/link';
 
 // Giữ lại biến topicShortcuts để các component khác (như chat, handoff form) import không bị lỗi
 export const topicShortcuts = [
-  { icon: '📚', label: 'Học tập / thi cử', topic: 'study_pressure' },
-  { icon: '👥', label: 'Bạn bè / lớp học', topic: 'friends' },
-  { icon: '🏠', label: 'Gia đình', topic: 'family_conflict' },
-  { icon: '❤️', label: 'Tình cảm', topic: 'relationships' },
-  { icon: '😔', label: 'Cảm xúc', topic: 'sadness' },
-  { icon: '📱', label: 'Mạng xã hội', topic: 'social_media' },
-  { icon: '🌱', label: 'Phát triển bản thân', topic: 'self_confidence' },
-  { icon: '💬', label: 'Chuyện khác', topic: 'other' },
+  { icon: '', label: 'Học tập / thi cử', topic: 'study_pressure' },
+  { icon: '', label: 'Bạn bè / lớp học', topic: 'friends' },
+  { icon: '', label: 'Gia đình', topic: 'family_conflict' },
+  { icon: '', label: 'Tình cảm', topic: 'relationships' },
+  { icon: '', label: 'Cảm xúc', topic: 'sadness' },
+  { icon: '', label: 'Mạng xã hội', topic: 'social_media' },
+  { icon: '', label: 'Phát triển bản thân', topic: 'self_confidence' },
+  { icon: '', label: 'Chuyện khác', topic: 'other' },
 ] as const;
 
 export function TopicShortcuts() {
@@ -35,7 +35,7 @@ export const helpTopics = [
   {
     topic: 'study_pressure',
     tag: 'STUDY PRESSURE',
-    icon: '📚',
+    icon: '',
     title: 'Khi việc học đang làm bạn ngợp',
     description:
       'Thử viết ra một việc học nhỏ nhất bạn có thể làm trong 10–15 phút. Sau đó nghỉ ngắn và xem điều gì vẫn còn khó. Điểm số không quyết định toàn bộ giá trị của bạn; nếu áp lực kéo dài, hãy nói với một người lớn bạn tin tưởng.',
@@ -46,7 +46,7 @@ export const helpTopics = [
   {
     topic: 'friends',
     tag: 'FRIENDS',
-    icon: '👥',
+    icon: '',
     title: 'Khi có mâu thuẫn với bạn bè',
     description:
       'Bạn có thể thử nói theo mẫu: "Khi chuyện này xảy ra, mình cảm thấy... Mình mong...". Không cần phải giải quyết mọi chuyện ngay. Nếu có đe dọa, bắt nạt hoặc bạn không cảm thấy an toàn, hãy báo một người lớn trong trường.',
@@ -57,7 +57,7 @@ export const helpTopics = [
   {
     topic: 'social_media',
     tag: 'CYBERBULLYING',
-    icon: '📱',
+    icon: '',
     title: 'Bị làm phiền hoặc chế giễu trên mạng',
     description:
       'Bạn không cần đưa mật khẩu cho bất kỳ ai. Có thể lưu lại bằng chứng phù hợp, dùng công cụ chặn/báo cáo của nền tảng và nói với người lớn đáng tin cậy, nhất là khi chuyện liên quan đến học sinh trong trường.',
