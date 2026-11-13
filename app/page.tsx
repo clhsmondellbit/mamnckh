@@ -49,33 +49,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* KHỐI TÍNH NĂNG NỔI BẬT (3 CỘT) */}
-      <section className="grid gap-6 sm:grid-cols-3">
-        <div className="rounded-3xl border border-[#e2ebd8] bg-white p-6 shadow-xs">
-          <span className="text-2xl mb-3 block">👂</span>
-          <h3 className="font-bold text-[#2c4a24] text-base mb-2">Lắng nghe, không phán xét</h3>
-          <p className="text-xs leading-6 text-slate-600">
-            Bạn được quyền có những cảm xúc phức tạp. MẦM không gán nhãn hay trách bạn.
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-[#e2ebd8] bg-white p-6 shadow-xs">
-          <span className="text-2xl mb-3 block">🧭</span>
-          <h3 className="font-bold text-[#2c4a24] text-base mb-2">Tìm một bước nhỏ</h3>
-          <p className="text-xs leading-6 text-slate-600">
-            Thay vì đưa quá nhiều lời khuyên, MẦM cùng bạn chọn điều có thể thử ngay hôm nay.
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-[#e2ebd8] bg-white p-6 shadow-xs">
-          <span className="text-2xl mb-3 block">🤝</span>
-          <h3 className="font-bold text-[#2c4a24] text-base mb-2">Kết nối người thật khi cần</h3>
-          <p className="text-xs leading-6 text-slate-600">
-            Khi chuyện trở nên nặng nề hoặc không an toàn, sự có mặt của một người lớn đáng tin cậy là quan trọng nhất.
-          </p>
-        </div>
-      </section>
-
       {/* BANNER KẾT NỐI VỚI NGƯỜI HỖ TRỢ */}
       <section className="rounded-3xl border border-[#e2ebd8] bg-[#f4f8f3] p-6 sm:p-8 space-y-4">
         <div>
