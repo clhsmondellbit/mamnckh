@@ -1,14 +1,24 @@
 import { getChatProvider, getSafetyProvider } from '@/lib/ai';
-import { getProviderUnavailableMessage, getRedSafetyMessage, presentationForLevel, validateModelOutput } from '@/lib/safety/policy';
+import { orchestrateSupportRequest } from '@/lib/ai/orchestrator';
+import {
+  getProviderUnavailableMessage,
+  getRedSafetyMessage,
+  getUnsafeOutputMessage,
+  presentationForLevel,
+  validateModelOutput,
+} from '@/lib/safety/policy';
 import { classifySafety, mostProtectiveLevel } from '@/lib/safety/classify';
 import { schoolSupportConfig } from '@/lib/school/config';
-import { checkRateLimit } from '@/lib/security/rate-limit';
+import { checkRateLimit, requestRateLimitKey } from '@/lib/security/rate-limit';
+import { JsonRequestError, noStoreHeaders, readJsonRequest } from '@/lib/security/request';
 import { SUPPORT_TOPICS, type ChatApiResponse, type ChatHistoryMessage } from '@/lib/types';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const historyItem = z.object({
-  role: z.enum(['user', 'assistant']),
+  // Assistant messages are never accepted from the browser: a forged assistant
+  // turn could otherwise be inserted into trusted-looking model context.
+  role: z.literal('user'),
   content: z.string().trim().min(1).max(1200),
 });
 
@@ -19,10 +29,6 @@ const requestSchema = z.object({
   history: z.array(historyItem).max(8).optional().default([]),
 });
 
-function getRateKey(request: NextRequest) {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown-client';
-}
-
 function response(
   message: string,
   supportLevel: ChatApiResponse['supportLevel'],
@@ -31,57 +37,70 @@ function response(
 ) {
   return NextResponse.json<ChatApiResponse>(
     { message, supportLevel, providerAvailable, ...presentationForLevel(supportLevel) },
-    { status },
+    { status, headers: noStoreHeaders() },
   );
 }
 
 export async function POST(request: NextRequest) {
-  const limit = checkRateLimit(getRateKey(request));
+  const limit = checkRateLimit(requestRateLimitKey(request, 'chat'), 12, 10 * 60 * 1000);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: 'Bạn đã gửi khá nhiều tin nhắn. Hãy thử lại sau ít phút.' },
-      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } },
+      { status: 429, headers: { ...noStoreHeaders(), 'Retry-After': String(limit.retryAfterSeconds) } },
     );
   }
 
   let payload: z.infer<typeof requestSchema>;
   try {
-    payload = requestSchema.parse(await request.json());
-  } catch {
-    return NextResponse.json({ error: 'Tin nhắn chưa hợp lệ hoặc quá dài.' }, { status: 400 });
+    payload = requestSchema.parse(await readJsonRequest(request, 20 * 1024));
+  } catch (error) {
+    const status = error instanceof JsonRequestError ? error.status : 400;
+    return NextResponse.json(
+      { error: status === 413 ? 'Nội dung gửi lên quá lớn.' : 'Tin nhắn chưa hợp lệ hoặc quá dài.' },
+      { status, headers: noStoreHeaders() },
+    );
   }
 
   const deterministic = classifySafety(payload.message);
   if (deterministic.level === 'red') {
-    return response(getRedSafetyMessage(schoolSupportConfig), 'red', true);
+    // The deterministic urgent path intentionally does not call an AI provider.
+    return response(getRedSafetyMessage(schoolSupportConfig), 'red', false);
   }
 
-  // The guardrail may escalate a case but must never reduce deterministic safety.
-  const modelSafety = await getSafetyProvider().assess(payload.message);
-  const supportLevel = mostProtectiveLevel(deterministic.level, modelSafety || 'green');
-  if (supportLevel === 'red') {
-    return response(getRedSafetyMessage(schoolSupportConfig), 'red', true);
-  }
-
+  let supportLevel: Exclude<ChatApiResponse['supportLevel'], 'red'> = deterministic.level;
   try {
+    // The guardrail can escalate a case but must never reduce deterministic safety.
+    const modelSafety = await getSafetyProvider().assess(payload.message);
+    const evaluatedLevel = mostProtectiveLevel(deterministic.level, modelSafety || 'green');
+    if (evaluatedLevel === 'red') {
+      return response(getRedSafetyMessage(schoolSupportConfig), 'red', false);
+    }
+    supportLevel = evaluatedLevel;
+
+    const orchestration = orchestrateSupportRequest(payload.message, payload.topicHint);
     const output = await getChatProvider().generate({
       message: payload.message,
       history: payload.history as ChatHistoryMessage[],
       supportLevel,
-      topicHint: payload.topicHint,
+      assistantModule: orchestration.module,
+      topicHint: orchestration.topicHint,
       schoolSupport: schoolSupportConfig,
     });
+
     const validation = validateModelOutput(output.text);
     if (!validation.safe) {
-      // A withheld output must never be replaced with a second uncontrolled response.
-      return response(getRedSafetyMessage(schoolSupportConfig), 'red', false, 503);
+      // Suppress unsafe model output without incorrectly labelling the student
+      // as an urgent case when the input did not indicate one.
+      return response(getUnsafeOutputMessage(), supportLevel, false, 503);
     }
-    // This is an extra guardrail; a timeout or ambiguous result cannot defeat
-    // the deterministic input/output policies already applied above.
+
+    // This optional second pass is an additional guardrail, not a guarantee.
+    // Provider failure/ambiguous output cannot lower the deterministic level.
     const outputSafety = await getSafetyProvider().isOutputSafe(output.text);
     if (outputSafety === false) {
-      return response(getRedSafetyMessage(schoolSupportConfig), 'red', false, 503);
+      return response(getUnsafeOutputMessage(), supportLevel, false, 503);
     }
+
     return response(output.text, supportLevel, true);
   } catch {
     return response(getProviderUnavailableMessage(), supportLevel, false, 503);

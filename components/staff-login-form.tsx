@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export function StaffLoginForm() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export function StaffLoginForm() {
       const response = await fetch('/api/staff/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       const body = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(body.error || 'Không thể đăng nhập.');
@@ -41,6 +42,10 @@ export function StaffLoginForm() {
 
         <form className="space-y-5" onSubmit={submit}>
           <label className="block text-xs font-bold text-[#2c4a24] space-y-1.5">
+            <span>Email công việc</span>
+            <input autoComplete="username" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-xl border border-slate-300 p-3.5 font-normal text-sm text-slate-800" required placeholder="ten@truong.edu.vn" />
+          </label>
+          <label className="block text-xs font-bold text-[#2c4a24] space-y-1.5">
             <span>Mật khẩu nhân sự</span>
             <input
               autoComplete="current-password"
@@ -56,7 +61,7 @@ export function StaffLoginForm() {
           <button
             type="submit"
             className="w-full rounded-2xl bg-[#2d4a22] py-3.5 text-sm font-bold text-white transition-all hover:bg-[#1f3617] hover:shadow-md disabled:opacity-50 cursor-pointer shadow-xs"
-            disabled={loading}
+            disabled={loading || !email || !password}
           >
             {loading ? 'Đang đăng nhập…' : 'Đăng nhập 🚀'}
           </button>

@@ -3,8 +3,11 @@ import Link from 'next/link';
 const links = [
   { href: '/chat', label: 'Trò chuyện' },
   { href: '/check-in', label: 'Check-in' },
-  { href: '/resources', label: 'Góc hỗ trợ' },
-  { href: '/help', label: 'Tìm người hỗ trợ' },
+  { href: '/resources', label: 'Tài nguyên' },
+  { href: '/tools', label: 'Công cụ' },
+  { href: '/journal', label: 'Nhật ký' },
+  { href: '/support-center', label: 'Kết nối thầy cô' },
+  { href: '/help', label: 'Hỗ trợ khẩn cấp' },
 ];
 
 export function SiteHeader() {

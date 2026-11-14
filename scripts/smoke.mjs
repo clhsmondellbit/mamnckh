@@ -1,5 +1,5 @@
 const baseUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:3000';
-const routes = ['/', '/chat', '/check-in', '/resources', '/help', '/privacy', '/about', '/staff/login'];
+const routes = ['/', '/chat', '/check-in', '/resources', '/help', '/support-center', '/tools', '/journal', '/privacy', '/about', '/staff/login'];
 
 for (const route of routes) {
   const response = await fetch(`${baseUrl}${route}`, { redirect: 'manual' });

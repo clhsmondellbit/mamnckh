@@ -3,6 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const resource = resources.find((item) => item.id === id);
+  const resource = resources.find((item) => item.id === id && item.audience === 'student');
   return resource ? NextResponse.json({ resource }) : NextResponse.json({ error: 'Không tìm thấy tài nguyên.' }, { status: 404 });
 }

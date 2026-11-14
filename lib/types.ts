@@ -65,7 +65,8 @@ export interface Resource {
 }
 
 export interface ChatHistoryMessage {
-  role: 'user' | 'assistant';
+  // Client-provided conversation context contains only prior student messages.
+  role: 'user';
   content: string;
 }
 

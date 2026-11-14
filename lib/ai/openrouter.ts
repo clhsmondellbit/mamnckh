@@ -36,6 +36,8 @@ export class OpenRouterChatProvider implements ChatModelProvider {
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
+        redirect: 'error',
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -83,6 +85,8 @@ export class OpenRouterSafetyProvider implements SafetyModelProvider {
     try {
       const response = await fetch(`${process.env.AI_BASE_URL || DEFAULT_BASE_URL}/chat/completions`, {
         method: 'POST',
+        redirect: 'error',
+        cache: 'no-store',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: process.env.SAFETY_MODEL || DEFAULT_SAFETY_MODEL,
@@ -117,6 +121,8 @@ export class OpenRouterSafetyProvider implements SafetyModelProvider {
     try {
       const response = await fetch(`${process.env.AI_BASE_URL || DEFAULT_BASE_URL}/chat/completions`, {
         method: 'POST',
+        redirect: 'error',
+        cache: 'no-store',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: process.env.SAFETY_MODEL || DEFAULT_SAFETY_MODEL,
