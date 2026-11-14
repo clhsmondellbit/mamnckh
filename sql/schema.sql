@@ -17,3 +17,10 @@ create table if not exists support_requests (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Keep dashboard listing and filtering bounded as the request queue grows.
+create index if not exists support_requests_created_at_idx
+  on support_requests (created_at desc);
+
+create index if not exists support_requests_status_created_at_idx
+  on support_requests (status, created_at desc);

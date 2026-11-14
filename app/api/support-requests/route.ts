@@ -1,36 +1,26 @@
-import { isCurrentStaffAuthenticated } from '@/lib/auth/staff';
-import { createSupportRequest, listSupportRequests, StorageUnavailableError } from '@/lib/db/support-requests';
-import { SUPPORT_TOPICS } from '@/lib/types';
-import { z } from 'zod';
+import { getCurrentStaffSession, staffHasRole } from '@/lib/auth/staff';
+import { listSupportRequests, StorageUnavailableError } from '@/lib/db/support-requests';
+import { isSameOriginRequest, noStoreHeaders } from '@/lib/security/request';
 import { NextRequest, NextResponse } from 'next/server';
 
-const supportRequestSchema = z.object({
-  preferredName: z.string().trim().max(80).optional(),
-  contactPreference: z.string().trim().max(120).optional(),
-  topic: z.enum(SUPPORT_TOPICS),
-  supportLevel: z.enum(['green', 'yellow']).default('yellow'),
-  studentNote: z.string().trim().max(700).optional(),
-  requestedSupport: z.string().trim().max(120).optional(),
-  consent: z.literal(true),
-});
-
 export async function POST(request: NextRequest) {
-  try {
-    const payload = supportRequestSchema.parse(await request.json());
-    const created = await createSupportRequest(payload);
-    return NextResponse.json({ id: created.id, createdAt: created.createdAt }, { status: 201 });
-  } catch (error) {
-    if (error instanceof StorageUnavailableError) return NextResponse.json({ error: 'Nhà trường chưa bật tính năng gửi yêu cầu hỗ trợ. Bạn vẫn có thể tìm một người lớn đáng tin cậy trực tiếp.' }, { status: 503 });
-    return NextResponse.json({ error: 'Yêu cầu hỗ trợ chưa hợp lệ.' }, { status: 400 });
-  }
+  if (!isSameOriginRequest(request)) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 403, headers: noStoreHeaders() });
+  return NextResponse.json(
+    { error: 'Biểu mẫu yêu cầu chung đã được thay bằng School Support Center để bạn chọn rõ người nhận và đồng ý chia sẻ dữ liệu.' },
+    { status: 410, headers: noStoreHeaders() },
+  );
 }
 
 export async function GET() {
-  if (!(await isCurrentStaffAuthenticated())) return NextResponse.json({ error: 'Không có quyền truy cập.' }, { status: 401 });
+  const actor = await getCurrentStaffSession();
+  if (!actor) return NextResponse.json({ error: 'Cần đăng nhập.' }, { status: 401, headers: noStoreHeaders() });
+  if (!staffHasRole(actor, ['super_admin','admin'])) return NextResponse.json({ error: 'Chỉ quản trị viên được xem hàng đợi yêu cầu chưa gắn người nhận.' }, { status: 403, headers: noStoreHeaders() });
   try {
-    return NextResponse.json({ requests: await listSupportRequests() });
+    return NextResponse.json({ requests: await listSupportRequests(actor) }, { headers: noStoreHeaders() });
   } catch (error) {
-    if (error instanceof StorageUnavailableError) return NextResponse.json({ error: 'Chưa có kho dữ liệu yêu cầu hỗ trợ.' }, { status: 503 });
-    return NextResponse.json({ error: 'Không thể tải yêu cầu hỗ trợ.' }, { status: 500 });
+    if (error instanceof StorageUnavailableError) {
+      return NextResponse.json({ error: 'Chưa có kho dữ liệu yêu cầu hỗ trợ.' }, { status: 503, headers: noStoreHeaders() });
+    }
+    return NextResponse.json({ error: 'Không thể tải yêu cầu hỗ trợ.' }, { status: 500, headers: noStoreHeaders() });
   }
 }

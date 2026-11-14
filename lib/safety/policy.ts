@@ -18,6 +18,10 @@ export function getProviderUnavailableMessage(): string {
   return 'Mình chưa thể phản hồi ngay lúc này. Bạn vẫn có thể xem các nguồn hỗ trợ của nhà trường hoặc tìm một người lớn mà bạn tin tưởng.';
 }
 
+export function getUnsafeOutputMessage(): string {
+  return 'Mình chưa thể gửi câu trả lời phù hợp lúc này. Bạn có thể thử diễn đạt lại điều mình đang cần, hoặc tìm một người lớn đáng tin cậy để cùng trao đổi.';
+}
+
 export function validateModelOutput(output: string): {
   safe: boolean;
   reason?: string;

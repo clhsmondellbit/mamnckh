@@ -23,7 +23,7 @@ export default function HomePage() {
               🌱 Trò chuyện cùng MẦM
             </Link>
             <Link
-              href="/handoff"
+              href="/help"
               className="inline-flex items-center gap-2 rounded-2xl border border-[#f2cecb] bg-[#fff7f5] px-6 py-3.5 text-sm font-bold text-[#9e4a4a] transition-all hover:bg-[#fcefee]"
             >
               🆘 Mình cần được giúp ngay
@@ -58,7 +58,7 @@ export default function HomePage() {
           </p>
         </div>
         <Link
-          href="/handoff"
+          href="/help"
           className="inline-flex items-center gap-2 rounded-xl bg-[#2d4a22] px-5 py-2.5 text-xs font-bold text-white transition-all hover:bg-[#1f3617]"
         >
           Xem hỗ trợ của nhà trường

@@ -119,7 +119,7 @@ export function CheckInForm() {
                 : 'border-[#d5e5cf] bg-white text-[#38582d] hover:bg-[#e4efdf]'
             }`}
           >
-            <input className="sr-only" type="radio" checked={feelsSafe} onChange={() => setFeelsSafe(true)} />
+            <input className="sr-only" type="radio" name="feelsSafe" value="yes" checked={feelsSafe} onChange={() => setFeelsSafe(true)} />
             Có, mình đang an toàn 🌿
           </label>
           <label
@@ -129,7 +129,7 @@ export function CheckInForm() {
                 : 'border-[#d5e5cf] bg-white text-[#8a3939] hover:bg-[#fcefee]'
             }`}
           >
-            <input className="sr-only" type="radio" checked={!feelsSafe} onChange={() => setFeelsSafe(false)} />
+            <input className="sr-only" type="radio" name="feelsSafe" value="no" checked={!feelsSafe} onChange={() => setFeelsSafe(false)} />
             Không chắc / Không an toàn 🆘
           </label>
         </div>

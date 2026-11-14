@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getProviderUnavailableMessage, getRedSafetyMessage, presentationForLevel, validateModelOutput } from '@/lib/safety/policy';
+import { getProviderUnavailableMessage, getRedSafetyMessage, getUnsafeOutputMessage, presentationForLevel, validateModelOutput } from '@/lib/safety/policy';
 
 describe('safety policy', () => {
   it('does not promise confidentiality in its emergency response', () => {
@@ -10,6 +10,10 @@ describe('safety policy', () => {
 
   it('blocks unsafe procedural model output', () => {
     expect(validateModelOutput('Đây là cách tự làm hại bản thân...').safe).toBe(false);
+  });
+
+  it('uses a neutral fallback when unsafe output is suppressed', () => {
+    expect(getUnsafeOutputMessage()).toMatch(/chưa thể gửi câu trả lời/i);
   });
 
   it('shows human and emergency support only for red', () => {

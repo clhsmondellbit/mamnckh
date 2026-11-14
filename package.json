@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "node scripts/smoke.mjs"
+    "test:e2e": "node scripts/smoke.mjs",
+    "staff:create": "node scripts/create-staff-user.mjs"
   },
   "dependencies": {
     "next": "16.3.8",

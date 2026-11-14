@@ -6,6 +6,7 @@ import type {
 } from '@/lib/types';
 
 export interface ModelInput {
+  assistantModule?: import('@/lib/ai/orchestrator').AssistantModule;
   message: string;
   history: ChatHistoryMessage[];
   supportLevel: Exclude<SupportLevel, 'red'>;

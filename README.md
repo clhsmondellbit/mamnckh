@@ -1,194 +1,146 @@
 # MẦM — AI Đồng Hành Học Đường
 
-MẦM là ứng dụng web tiếng Việt hỗ trợ sức khỏe tinh thần học đường cho học sinh THPT. Ứng dụng giúp học sinh có một điểm bắt đầu an toàn để chia sẻ, nhìn rõ vấn đề và tìm người thật có thể hỗ trợ.
+MẦM là ứng dụng web tiếng Việt hỗ trợ học sinh nhìn nhận khó khăn học đường, quản lý áp lực và tự nguyện kết nối với người lớn/nhân sự hỗ trợ do nhà trường xác minh.
 
-> MẦM là công cụ hỗ trợ bước đầu; không thay thế chuyên gia tâm lý, bác sĩ, chẩn đoán hoặc dịch vụ khẩn cấp. Khi có nguy cơ tức thời, hãy tìm người lớn đáng tin cậy ở gần và liên hệ dịch vụ hỗ trợ phù hợp tại địa phương.
+> MẦM là công cụ hỗ trợ bước đầu, không phải cơ sở chẩn đoán và không thay thế chuyên gia tâm lý, bác sĩ, giáo viên hoặc hỗ trợ trực tiếp. Nếu cần trợ giúp ngay, hãy đến cạnh một người lớn đáng tin cậy đang ở gần và liên hệ dịch vụ khẩn cấp phù hợp tại địa phương. Danh bạ MẦM không bảo đảm người được liệt kê đang trực hoặc sẽ nghe máy ngay.
 
-Thứ tự ưu tiên của sản phẩm:
+## Tình trạng bàn giao
 
-**AN TOÀN → LẮNG NGHE → HIỂU VẤN ĐỀ → ĐỊNH HƯỚNG → KẾT NỐI NGƯỜI THẬT**
+Bản này bổ sung School Support Center có danh bạ lưu trong PostgreSQL, quy trình xác minh và đồng ý công khai kênh liên hệ, liên kết gọi `tel:`, sao chép số, yêu cầu tư vấn/đặt lịch, slot do nhân sự mở, tài khoản nhân sự riêng, vai trò và nhật ký thao tác. Hồ sơ giáo viên và số điện thoại không có dữ liệu giả; danh bạ công khai rỗng cho đến khi nhà trường nhập và xác minh thông tin thật.
 
-## Mục lục
+**Điều kiện trước production:** source đầu vào vẫn ghim `next@16.3.8`. Dependency chưa được nâng cấp trong môi trường xây dựng vì npm registry không phân giải DNS. Tham khảo `SECURITY_AUDIT.md`; không triển khai public trước khi nâng phiên bản Next.js đã vá, cài sạch, audit, test và build lại.
 
-- [Tính năng](#tính-năng)
-- [Công nghệ](#công-nghệ)
-- [Yêu cầu](#yêu-cầu)
-- [Cài đặt và chạy](#cài-đặt-và-chạy)
-- [Cấu hình môi trường](#cấu-hình-môi-trường)
-- [Cấu hình thông tin hỗ trợ của trường](#cấu-hình-thông-tin-hỗ-trợ-của-trường)
-- [Bật quy trình gửi yêu cầu hỗ trợ](#bật-quy-trình-gửi-yêu-cầu-hỗ-trợ)
-- [Các trang và API](#các-trang-và-api)
-- [Kiểm tra chất lượng](#kiểm-tra-chất-lượng)
-- [Quyền riêng tư và giới hạn an toàn](#quyền-riêng-tư-và-giới-hạn-an-toàn)
-- [Triển khai](#triển-khai)
-- [Tài liệu trong dự án](#tài-liệu-trong-dự-án)
+## Chức năng hiện có
 
-## Tính năng
+- Chat khách; chỉ gửi các lượt người dùng trước đó làm ngữ cảnh, tối đa 8 lượt; không gửi lịch sử assistant do trình duyệt tự khai báo.
+- Safety checks trước/sau khi gọi AI; tình huống nghiêm trọng dùng nhánh hướng dẫn xác định và không chờ AI.
+- AI Orchestrator chọn prompt chuyên biệt trong một provider chung: chat, hỗ trợ học tập, cảm xúc, phản tư, giao tiếp, kiến thức, hướng dẫn tìm người hỗ trợ.
+- Check-in cảm xúc không tạo hồ sơ tâm lý.
+- Thư viện nội dung hiện có, tìm kiếm không phân biệt dấu và bookmark lưu cục bộ.
+- Công cụ grounding, chia nhỏ nhiệm vụ, phản tư ngắn; không tự chấm điểm học sinh.
+- Nhật ký phản tư local-only trong trình duyệt; không được tự động gửi vào AI context hoặc School Support Center.
+- School Support Center: danh bạ chỉ gồm hồ sơ được xác minh; gọi điện bằng `tel:`, copy số, tìm kiếm/lọc, gửi yêu cầu và đặt lịch.
+- Counselor/staff dashboard: hàng đợi yêu cầu theo hồ sơ được phân công, mở slot, xác nhận/từ chối/hoàn tất.
+- Admin: quản lý hồ sơ và tài khoản nhân sự, xác minh/thu hồi xác minh, audit log.
 
-- Trò chuyện khách không cần tài khoản học sinh.
-- Check-in cảm xúc ngắn để học sinh tự nhìn lại tâm trạng, áp lực, cảm giác kết nối và an toàn.
-- Phân loại mức hỗ trợ theo ba mức: **green** (khó khăn thông thường), **yellow** (nên kết nối thêm với người lớn), **red** (ưu tiên an toàn ngay).
-- Quy tắc an toàn tiếng Việt chạy trước phản hồi AI. Guardrail AI nếu được cấu hình chỉ có thể nâng mức cảnh báo, không được hạ mức do quy tắc xác định. Trường hợp red dùng hướng dẫn xác định sẵn và không chờ mô hình hội thoại.
-- Danh sách tài nguyên và thông tin liên hệ do trường cung cấp. Ứng dụng không tự tạo tên, số điện thoại hoặc hướng dẫn khẩn cấp.
-- Quy trình tự nguyện gửi yêu cầu hỗ trợ cho nhân sự nhà trường; chỉ bật khi được cấu hình đầy đủ.
-- Khu vực nhân sự có đăng nhập và quản lý yêu cầu hỗ trợ.
+Các phần chưa triển khai đầy đủ (CMS nội dung, RAG, push notifications, nhắc lịch, PWA, streaming, nhiều hơn 8 lượt ngữ cảnh, đánh giá từng câu trả lời AI, xác minh SMS OTP) được liệt kê trong `FEATURES.md`; không giả lập bằng UI.
 
 ## Công nghệ
 
-- Next.js 16 (App Router), React 19, TypeScript
-- Tailwind CSS 4
-- OpenRouter qua API tương thích OpenAI (tùy chọn)
-- PostgreSQL (chỉ cần cho quy trình yêu cầu hỗ trợ tùy chọn)
-- Vitest và smoke test HTTP
-
-Các trang được tổ chức trong `app/`, API server trong `app/api/`, thành phần giao diện trong `components/`, và logic dùng chung trong `lib/`.
+- Next.js App Router, React, TypeScript.
+- PostgreSQL qua `postgres` tagged-template queries.
+- AI provider API tương thích OpenAI/OpenRouter (tùy cấu hình).
+- Zod validation, Vitest.
+- AES-256-GCM cho dữ liệu riêng tư của yêu cầu hỗ trợ; scrypt cho mật khẩu nhân sự.
 
 ## Yêu cầu
 
-- Node.js 20 trở lên
-- npm 10 trở lên
-- PostgreSQL 15 trở lên nếu bật lưu yêu cầu hỗ trợ và dashboard nhân sự
-- API key OpenRouter nếu muốn có phản hồi hội thoại AI trực tiếp
+- Node.js 20.9+ (khuyến nghị Node.js 22 LTS được nền tảng hỗ trợ).
+- npm 10+.
+- PostgreSQL 14+ (15+ khuyến nghị) nếu bật School Support Center/staff.
+- API key AI provider nếu cần phản hồi AI trực tiếp.
 
-## Cài đặt và chạy
+## Cài đặt local
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-Mở [http://localhost:3000](http://localhost:3000). Máy chủ phát triển Next.js sẽ tải cấu hình từ `.env.local`. Không đưa tệp này lên Git.
-
-Nếu chưa đặt `OPENROUTER_API_KEY`, ứng dụng vẫn chạy; phần chat hiển thị thông báo không khả dụng thay vì giả lập câu trả lời AI. Các trang trợ giúp, an toàn, tài nguyên và quyền riêng tư vẫn dùng được.
+Mở `http://localhost:3000`. Nếu không có `OPENROUTER_API_KEY`, ứng dụng không giả lập AI; API trả thông báo provider chưa khả dụng. Các trang tĩnh, công cụ và thư viện vẫn hoạt động. Danh bạ trực tuyến yêu cầu PostgreSQL và migration.
 
 ## Cấu hình môi trường
 
-Sao chép `.env.example` thành `.env.local`, sau đó điền các biến cần dùng. Để trống các giá trị tùy chọn nếu chưa bật tính năng tương ứng.
+| Biến | Ý nghĩa |
+|---|---|
+| `OPENROUTER_API_KEY` | Secret AI provider, chỉ server-side. |
+| `AI_BASE_URL`, `AI_MODEL`, `SAFETY_MODEL` | Provider endpoint và model được operator chọn. |
+| `ENABLE_STAFF_DASHBOARD=true` | Bật các API staff/School Support Center; cần đồng thời có `DATABASE_URL`, `AUTH_SECRET` hợp lệ và `DATA_ENCRYPTION_KEY` Base64 đúng 32 bytes. |
+| `DATABASE_URL` | PostgreSQL connection string. |
+| `AUTH_SECRET` | HMAC session secret tối thiểu 32 ký tự; dùng random secret. |
+| `DATA_ENCRYPTION_KEY` | Base64 của đúng 32 bytes ngẫu nhiên cho dữ liệu yêu cầu hỗ trợ. Mất key thì không giải mã được dữ liệu đang lưu. |
+| `CRON_SECRET` | Secret dài, ngẫu nhiên cho endpoint dọn dữ liệu định kỳ. |
+| `APP_URL` | Public origin chính xác; HTTPS khi production, không có path. |
+| `SCHOOL_SUPPORT_CONFIG_JSON` | Cấu hình hướng dẫn an toàn/escalation cho AI; **không** phải danh bạ công khai. |
 
-| Biến | Bắt buộc khi | Mô tả |
-| --- | --- | --- |
-| `AI_PROVIDER` | Có thể để mặc định | Provider hiện dùng là `openrouter`. |
-| `AI_BASE_URL` | Dùng AI | API base URL; mặc định `https://openrouter.ai/api/v1`. |
-| `OPENROUTER_API_KEY` | Muốn có phản hồi AI | API key bí mật; chỉ sử dụng phía server. Không đổi thành biến `NEXT_PUBLIC_`. |
-| `AI_MODEL` | Dùng AI | Model hội thoại; mặc định `qwen/qwen3-30b-a3b:free`. |
-| `SAFETY_MODEL` | Dùng guardrail AI | Model hỗ trợ rà soát an toàn; mặc định `nvidia/nemotron-3.5-content-safety:free`. |
-| `NEXT_PUBLIC_SCHOOL_NAME` | Có thông tin trường đã xác minh | Tên trường hiển thị công khai. |
-| `SCHOOL_SUPPORT_CONFIG_JSON` | Có đầu mối hỗ trợ đã xác minh | Cấu hình JSON các đầu mối, xem mẫu bên dưới. |
-| `SCHOOL_ESCALATION_INSTRUCTIONS` | Có hướng dẫn đã xác minh | Hướng dẫn kết nối/hỗ trợ do trường phê duyệt. |
-| `SCHOOL_SUPPORT_LAST_VERIFIED_AT` | Có thông tin trường | Ngày thông tin được rà soát gần nhất. |
-| `ENABLE_STAFF_DASHBOARD` | Bật quy trình nhân sự | Phải đặt chính xác `true`. |
-| `DATABASE_URL` | Bật quy trình nhân sự | Chuỗi kết nối PostgreSQL. |
-| `AUTH_SECRET` | Bật quy trình nhân sự | Bí mật ký phiên đăng nhập, tối thiểu 32 ký tự. |
-| `STAFF_PASSWORD` | Bật quy trình nhân sự | Mật khẩu nhân sự dùng để đăng nhập. |
-| `APP_URL` | Theo môi trường triển khai | URL gốc ứng dụng; mặc định `http://localhost:3000`. |
-
-Giữ mọi khóa và mật khẩu ở phía server. Dùng secret manager của nền tảng triển khai cho môi trường production; không commit `.env.local` hoặc chia sẻ giá trị bí mật trong log.
-
-## Cấu hình thông tin hỗ trợ của trường
-
-Mở [config/school-support.example.json](config/school-support.example.json), điền thông tin đã được nhà trường xác nhận rồi đặt nội dung JSON vào `SCHOOL_SUPPORT_CONFIG_JSON`. Có thể dùng một dòng JSON trong `.env.local`, ví dụ:
-
-```dotenv
-SCHOOL_SUPPORT_CONFIG_JSON={"schoolName":"Tên trường","homeroomTeacher":{"label":"GVCN","name":"","phone":"","email":"","availability":""},"schoolCounselor":{"label":"Người phụ trách tư vấn học đường","name":"","phone":"","email":"","location":"","availability":""},"schoolSupportRoom":{"label":"Phòng tư vấn học đường","location":"","availability":""},"emergencyContact":{"label":"Đầu mối khẩn cấp của trường","phone":""},"nearbyMedicalFacility":{"label":"Cơ sở y tế gần trường","name":"","location":""},"escalationInstructions":"","lastVerifiedAt":"2026-01-01"}
-```
-
-Thay toàn bộ ví dụ bằng dữ liệu thực đã xác minh trước khi sử dụng với học sinh. Để trống trường thông tin chưa biết; ứng dụng không điền thay bằng dữ liệu phỏng đoán. Cập nhật ngày xác minh mỗi khi đầu mối hoặc quy trình thay đổi.
-
-## Bật quy trình gửi yêu cầu hỗ trợ
-
-Mặc định, tính năng gửi yêu cầu và khu vực nhân sự bị tắt. Để bật, cần cấu hình đồng thời `ENABLE_STAFF_DASHBOARD=true`, `DATABASE_URL`, `AUTH_SECRET` (ít nhất 32 ký tự) và `STAFF_PASSWORD`.
-
-Tạo bảng tối thiểu trong cơ sở dữ liệu:
+Tạo secret ví dụ trên máy tin cậy:
 
 ```bash
-psql "$DATABASE_URL" -f sql/schema.sql
+openssl rand -hex 32       # AUTH_SECRET
+openssl rand -base64 32    # DATA_ENCRYPTION_KEY
+openssl rand -hex 32       # CRON_SECRET
 ```
 
-Sau đó khởi động lại ứng dụng. Học sinh có thể chủ động gửi yêu cầu; nhân sự đăng nhập tại `/staff/login`, xem ở `/staff/requests` và quản lý qua dashboard. Tính năng này chỉ lưu các trường học sinh tự gửi cùng thông tin xử lý của nhân sự, không lưu toàn bộ nội dung chat. Nhà trường cần giới hạn quyền truy cập và xác định thời hạn lưu/xóa dữ liệu.
+Không commit `.env.local`, không để secret trong `NEXT_PUBLIC_*`, source code, screenshot hoặc log. Xem `ENV_SETUP.md`.
 
-## Các trang và API
+## Database và bootstrap admin
 
-### Trang giao diện
+Trên database mới, chạy lần lượt:
 
-| Đường dẫn | Mục đích |
-| --- | --- |
-| `/` | Trang chủ |
-| `/chat` | Trò chuyện hỗ trợ |
-| `/check-in` | Check-in cảm xúc |
-| `/help` | Trợ giúp và kết nối hỗ trợ |
-| `/resources` | Tài nguyên |
-| `/about` | Giới thiệu MẦM |
-| `/privacy` | Thông tin quyền riêng tư |
-| `/staff` | Cổng khu vực nhân sự |
-| `/staff/login` | Đăng nhập nhân sự |
-| `/staff/dashboard` | Dashboard nhân sự |
-| `/staff/requests` | Danh sách yêu cầu hỗ trợ |
-| `/staff/settings` | Cài đặt nhân sự |
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/schema.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/migrations/002_school_support_center.sql
+```
 
-### API
+Migration `002` tạo các bảng `staff_users`, `school_support_contacts`, `school_support_slots`, `school_support_appointments` và các audit logs. Migration là additive đối với `support_requests` hiện có. Sao lưu và chạy thử trên staging trước production.
 
-| Phương thức và đường dẫn | Mục đích |
-| --- | --- |
-| `POST /api/chat` | Xử lý chat, kiểm tra mức an toàn và trả lời qua provider AI nếu khả dụng |
-| `POST /api/chat/classify` | Phân loại mức hỗ trợ cho nội dung gửi lên |
-| `POST /api/check-in` | Đánh giá check-in; không lưu câu trả lời check-in |
-| `GET /api/resources` | Lấy danh sách tài nguyên |
-| `GET /api/resources/:id` | Lấy tài nguyên theo mã |
-| `GET /api/school-support` | Lấy các đầu mối trường đã cấu hình |
-| `POST /api/support-requests` | Tạo yêu cầu hỗ trợ tự nguyện |
-| `GET /api/support-requests` | Liệt kê yêu cầu; yêu cầu phiên nhân sự hợp lệ |
-| `PATCH /api/support-requests/:id` | Cập nhật xử lý yêu cầu; yêu cầu phiên nhân sự hợp lệ |
-| `POST /api/staff/auth` | Đăng nhập nhân sự |
-| `DELETE /api/staff/auth` | Đăng xuất nhân sự |
+Tạo tài khoản Super Admin ban đầu từ môi trường tin cậy có quyền DB. Các biến `STAFF_BOOTSTRAP_*` chỉ dùng một lần, không đưa vào `.env.example` hoặc secret store dài hạn:
 
-API kiểm tra dữ liệu đầu vào phía server. Khi gửi dữ liệu không hợp lệ, API trả lỗi thay vì tiếp tục xử lý.
+```bash
+STAFF_BOOTSTRAP_EMAIL=admin@school.example \
+STAFF_BOOTSTRAP_NAME='School Administrator' \
+STAFF_BOOTSTRAP_PASSWORD='use-a-unique-16-plus-character-password' \
+npm run staff:create
+```
+
+Thay email/mật khẩu ví dụ bằng tài khoản do nhà trường kiểm soát. Script bootstrap chỉ chạy khi bảng `staff_users` còn trống và chỉ tạo Super Admin đầu tiên; các tài khoản tiếp theo phải tạo trong Admin Dashboard. Chỉ chia sẻ mật khẩu ban đầu với đúng người nhận qua kênh an toàn. Sau bootstrap, xóa các biến tạm khỏi shell/CI logs. Không dùng tài khoản chung.
+
+## Kết nối giáo viên và đặt lịch
+
+1. Admin đăng nhập `/staff/login`.
+2. Trong dashboard, tạo hồ sơ nhân sự với thông tin do nhà trường xác nhận. Hồ sơ mới mặc định chưa xác minh và chưa hiển thị công khai.
+3. Xác minh danh tính/đơn vị, quyền sử dụng số điện thoại/email; chỉ bật từng ô đồng ý công khai khi có bằng chứng đồng ý thực tế.
+4. Mọi cập nhật hồ sơ sẽ tự thu hồi trạng thái xác minh và ẩn ảnh/điện thoại/email; đóng slot chưa đặt và tự vô hiệu hóa các tài khoản giáo viên/counselor gắn với hồ sơ đó.
+5. Sau khi xác minh lại hồ sơ, Admin kiểm tra và kích hoạt lại đúng tài khoản được phân công nếu còn phù hợp. Tài khoản đã bị vô hiệu hóa không thể đăng nhập; `session_version` làm mất hiệu lực cookie cũ.
+6. Tạo tài khoản riêng cho nhân sự; vai trò `teacher`/`school_counselor` cần gắn với một hồ sơ hỗ trợ.
+7. Giáo viên mở slot thực tế trong Availability Manager. Học sinh chỉ thấy slot có trạng thái available.
+8. Nếu học sinh chọn slot, transaction PostgreSQL giữ slot nguyên tử; yêu cầu vẫn `pending` cho đến khi nhân sự xác nhận. Nếu không có slot, đây chỉ là yêu cầu lịch thủ công chờ xác nhận, không phải booking chắc chắn.
+
+Chi tiết tại `SCHOOL_SUPPORT_CENTER.md` và `COUNSELOR_SETUP.md`.
+
+## Các trang chính
+
+- `/` — Trang chủ.
+- `/chat` — AI Chat.
+- `/check-in` — Check-in tự nguyện.
+- `/tools` — Công cụ hỗ trợ học sinh.
+- `/journal` — Nhật ký local-only.
+- `/resources` — Thư viện kiến thức hiện có.
+- `/support-center` — Danh bạ đã xác minh, gọi điện và yêu cầu hỗ trợ.
+- `/help` — Hướng dẫn tìm sự trợ giúp.
+- `/staff/login`, `/staff/dashboard` — Khu vực nhân sự được phân quyền.
 
 ## Kiểm tra chất lượng
 
 ```bash
 npm run typecheck
 npm run lint
-npm test
+npm run test
 npm run build
+npm audit --audit-level=high
 ```
 
-Smoke test HTTP chạy với máy chủ production đã khởi động. Trong cửa sổ terminal thứ nhất:
+Không đánh dấu PASS nếu chưa thực sự chạy. Tình trạng lần kiểm tra bàn giao được ghi trong `TESTING.md`. E2E smoke yêu cầu ứng dụng đã build/chạy và được trỏ tới bởi `APP_URL`.
 
-```bash
-npm run build
-npm run start
-```
+## Bảo mật và quyền riêng tư
 
-Trong cửa sổ terminal thứ hai:
+- Không tự động gửi lịch sử chat hoặc nhật ký cá nhân đến giáo viên.
+- Yêu cầu tư vấn chỉ chứa trường người dùng nhập và đồng ý; trường nhạy cảm được mã hóa bằng AES-256-GCM.
+- Admin/counselor/teacher chỉ có phạm vi truy cập theo vai trò; giáo viên chỉ xem yêu cầu thuộc hồ sơ được gắn.
+- Số điện thoại và email chỉ công khai khi hồ sơ đã xác minh, kênh đó có consent và cờ public được bật. Khi chỉnh sửa/ngừng công khai hồ sơ, tài khoản Teacher/School Counselor gắn hồ sơ bị tự vô hiệu hóa; Admin chỉ kích hoạt lại sau khi xác minh lại.
+- `tel:` chỉ mở khi học sinh nhấn nút; MẦM không tự gọi/SMS hoặc chia sẻ vị trí.
+- Rate limiter hiện process-local; triển khai nhiều instance cần WAF/Redis/shared limiter.
+- Cấu hình scheduler hằng ngày để gọi retention endpoint; không cấu hình scheduler thì cleanup không tự chạy.
 
-```bash
-E2E_BASE_URL=http://127.0.0.1:3000 npm run test:e2e
-```
-
-Smoke test kiểm tra các route công khai và đường xử lý red mà không cần khóa AI. Các kịch bản hồi quy về phân luồng an toàn nằm trong bộ test Vitest.
-
-## Quyền riêng tư và giới hạn an toàn
-
-- Chat khách không cần tên thật; transcript chat không được lưu trong cơ sở dữ liệu của MVP.
-- Check-in được đánh giá trong request và không được lưu lại.
-- Yêu cầu hỗ trợ là tự nguyện, cần sự đồng ý rõ ràng và chỉ lưu trường người dùng chủ động gửi. Không đính kèm transcript chat.
-- Không nên nhập mật khẩu, OTP, dữ liệu tài chính, thông tin đăng nhập mạng xã hội, địa chỉ chính xác không cần thiết hoặc thông tin nhận dạng không cần thiết.
-- Phân loại quy tắc là lớp khởi đầu có thể kiểm tra, không phải công cụ chẩn đoán lâm sàng và không thể bảo đảm nhận diện mọi cách diễn đạt.
-- Trường cần kiểm thử tình huống tiếng Việt thực tế, xác minh danh bạ và quy trình ngoài giờ, phân quyền nhân sự, công bố chính sách lưu trữ/xóa dữ liệu và chuẩn bị quy trình xử lý sự cố trước khi triển khai cho học sinh.
-
-Xem thêm [docs/SAFETY.md](docs/SAFETY.md), [docs/PRIVACY.md](docs/PRIVACY.md) và [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Triển khai
-
-Quy trình tổng quát: cài dependencies, cấu hình biến môi trường trên nền tảng, chạy `npm run build`, sau đó chạy `npm run start` trong môi trường Node.js. Khi dùng PostgreSQL, áp dụng `sql/schema.sql` trước khi bật tính năng nhân sự. Đặt `APP_URL` theo tên miền triển khai và bảo đảm kết nối chỉ dùng HTTPS trong production.
-
-Trước khi đưa vào sử dụng thật, nhà trường cần phê duyệt model/provider, nội dung an toàn, đầu mối hỗ trợ, phân quyền, thời hạn lưu trữ và quy trình ứng phó. Cấu hình model miễn phí trong mẫu phù hợp cho phát triển/demo; không phải cam kết về độ tin cậy, quyền riêng tư hoặc mức phù hợp cho môi trường production.
-
-## Tài liệu trong dự án
-
-- [Kiến trúc](docs/ARCHITECTURE.md)
-- [Thiết kế an toàn](docs/SAFETY.md)
-- [Quyền riêng tư](docs/PRIVACY.md)
-- [Mẫu cấu hình hỗ trợ trường](config/school-support.example.json)
-- [Hướng dẫn smoke test](tests/e2e/README.md)
+Xem `SECURITY_AUDIT.md`, `docs/PRIVACY.md`, `docs/SAFETY.md`.

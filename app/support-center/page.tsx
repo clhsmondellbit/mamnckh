@@ -1,0 +1,5 @@
+import { SupportDirectory } from '@/components/support-center/directory';
+export const dynamic = 'force-dynamic';
+export default function SupportCenterPage() {
+  return <div className="page-shell py-10 sm:py-14"><div className="max-w-3xl"><p className="eyebrow">School Support Center</p><h1 className="mt-2 text-3xl font-extrabold text-ink">Kết nối hỗ trợ học đường</h1><p className="mt-3 leading-7 text-slate-700">Tìm người hỗ trợ theo vai trò, bộ phận, chủ đề và hình thức liên hệ. Hồ sơ và số điện thoại chỉ xuất hiện khi đã được nhà trường xác minh và cho phép công khai.</p><p className="mt-2 text-sm leading-6 text-slate-600">Bạn chủ động chọn người để liên hệ. MẦM không tự gọi điện, gửi tin nhắn hoặc chuyển nội dung trò chuyện AI.</p></div><SupportDirectory /><div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950"><strong>Không phải kênh khẩn cấp:</strong> trạng thái tiếp nhận không bảo đảm người đó đang trực hoặc sẽ nghe máy ngay. Nếu bạn cần trợ giúp ngay, hãy đến cạnh người lớn đáng tin cậy hoặc thầy cô/nhân viên đang ở gần bạn.</div></div>;
+}

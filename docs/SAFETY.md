@@ -1,23 +1,32 @@
-# Safety design
+# Thiết kế an toàn MẦM
 
-MẦM is an AI support bridge, not an autonomous crisis responder. Its priority is safety, then listening, understanding, guidance, and human connection.
+MẦM là công cụ hỗ trợ bước đầu, không chẩn đoán, không thay thế chuyên gia tâm lý/bác sĩ, không thay thế người lớn đáng tin cậy và không phải dịch vụ khẩn cấp.
 
-## Support levels
+## Nguyên tắc
 
-- **Green:** ordinary difficulty. The assistant listens, clarifies, and helps choose a small practical step.
-- **Yellow:** persistent, materially disruptive, or serious difficulty. The assistant keeps support non-diagnostic and explicitly encourages a trusted adult or configured school support.
-- **Red:** immediate safety concern, self-harm/suicide signal or plan, serious violence, abuse, or immediate danger. Normal coaching stops. The UI directs the student to a nearby trusted adult, verified school support, and appropriate local emergency/professional support.
+- Học sinh tự chọn điều muốn chia sẻ; không tạo hồ sơ tâm lý, điểm rủi ro, bảng xếp hạng hoặc dashboard theo dõi cảm xúc.
+- Trợ lý không phán xét người trong xung đột, không tự coi suy luận là sự thật, không khuyến khích thao túng/gây áp lực.
+- Không tự chuyển nội dung chat, nhật ký hoặc vị trí tới giáo viên. Học sinh phải tự mở biểu mẫu và đồng ý từng dữ liệu gửi.
+- Danh bạ chỉ hiển thị người do nhà trường xác minh và kênh liên hệ được phép công khai. Trạng thái tiếp nhận không đảm bảo người đó đang trực hoặc trả lời tức thì.
+- Tình huống nguy hiểm tức thời: hướng dẫn học sinh tìm người lớn đáng tin cậy đang ở gần và dịch vụ hỗ trợ khẩn cấp phù hợp tại địa phương; không đưa ra lời hứa rằng giáo viên trong danh bạ chắc chắn nghe máy.
 
-## Layers
+## Pipeline an toàn AI
 
-1. Deterministic Vietnamese safety rules are evaluated first and can only be escalated.
-2. The optional guardrail model can raise, never lower, a result.
-3. Red mode has a deterministic response and does not wait for the conversational model.
-4. Conversational model output is checked before it reaches the UI.
-5. A provider failure shows a transparent unavailable message; it does not fabricate an answer.
+1. Kiểm tra đầu vào giới hạn kích thước và schema.
+2. Bộ phân loại xác định chạy trước provider; nhánh khẩn cấp không phụ thuộc AI.
+3. AI Orchestrator chọn prompt theo chủ đề tại thời điểm xử lý, không lưu nhãn thành hồ sơ.
+4. Provider dùng prompt chung và ngữ cảnh user-turn có giới hạn; không tin các lượt assistant do client gửi.
+5. Đầu ra qua validation xác định và guardrail bổ sung.
+6. Provider failure/đầu ra không an toàn không bị diễn giải thành phản hồi đã được kiểm chứng.
 
-## Operational limits
+## Ba mức hỗ trợ nội bộ
 
-The deterministic rules are an auditable starting layer, not a clinical classifier. Schools must test them with their approved scenario set, review Vietnamese language variations, configure verified contacts, train authorized staff, and define after-hours procedures before deployment.
+- **Green:** khó khăn thông thường; lắng nghe, làm rõ và tìm một bước nhỏ.
+- **Yellow:** vấn đề kéo dài hoặc tác động đáng kể; khuyến khích tìm người lớn đáng tin cậy/đầu mối đã xác minh.
+- **Red:** tín hiệu cần bảo đảm an toàn ngay; dừng tư vấn thông thường và hướng tới trợ giúp trực tiếp.
 
-MẦM must never provide dangerous instructions, minimize immediate danger, promise absolute secrecy, diagnose a condition, or encourage secrecy from a responsible adult.
+Đây là cơ chế hỗ trợ luồng xử lý, không phải thang đo hoặc chẩn đoán học sinh.
+
+## Giới hạn
+
+Phân loại hiện tại dựa trên quy tắc tiếng Việt và có false positive/false negative; không thay thế đánh giá con người. Cần kiểm thử ngôn ngữ bởi nhóm chuyên môn phù hợp và review định kỳ. AI module routing hiện dựa trên từ khóa, không phải hiểu biết hoàn hảo về ý định.
