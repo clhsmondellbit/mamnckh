@@ -12,6 +12,25 @@ class ProviderError extends Error {
   }
 }
 
+function configuredBaseUrl(): string {
+  const raw = process.env.AI_BASE_URL || DEFAULT_BASE_URL;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new ProviderError('AI_BASE_URL must be an absolute HTTP(S) URL');
+  }
+
+  const localDevelopmentHost = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  const secure = url.protocol === 'https:';
+  const localHttpDevelopment = process.env.NODE_ENV !== 'production' && url.protocol === 'http:' && localDevelopmentHost;
+  if ((!secure && !localHttpDevelopment) || url.username || url.password || url.search || url.hash) {
+    throw new ProviderError('AI_BASE_URL must use HTTPS; HTTP is allowed only for local development without credentials or query parameters');
+  }
+
+  return url.toString().replace(/\/+$/, '');
+}
+
 function removeReasoning(text: string): string {
   return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 }
@@ -25,7 +44,7 @@ export class OpenRouterChatProvider implements ChatModelProvider {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) throw new ProviderError('OPENROUTER_API_KEY is not configured');
     this.apiKey = apiKey;
-    this.baseUrl = process.env.AI_BASE_URL || DEFAULT_BASE_URL;
+    this.baseUrl = configuredBaseUrl();
     this.model = process.env.AI_MODEL || DEFAULT_CHAT_MODEL;
   }
 
@@ -72,18 +91,18 @@ export class OpenRouterChatProvider implements ChatModelProvider {
 }
 
 /**
- * Guardrail output can only raise the support level. Any parse/provider failure
- * returns null so deterministic safety rules remain the trusted baseline.
+ * Input assessment is tri-state: GREEN/YELLOW/RED are explicit model labels;
+ * null means the guardrail could not verify the input and must fail closed.
  */
 export class OpenRouterSafetyProvider implements SafetyModelProvider {
-  async assess(message: string): Promise<'yellow' | 'red' | null> {
+  async assess(message: string): Promise<'green' | 'yellow' | 'red' | null> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) return null;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8_000);
     try {
-      const response = await fetch(`${process.env.AI_BASE_URL || DEFAULT_BASE_URL}/chat/completions`, {
+      const response = await fetch(`${configuredBaseUrl()}/chat/completions`, {
         method: 'POST',
         redirect: 'error',
         cache: 'no-store',
@@ -95,7 +114,7 @@ export class OpenRouterSafetyProvider implements SafetyModelProvider {
           messages: [
             {
               role: 'system',
-              content: 'Classify Vietnamese student text for support routing. Reply with only RED for immediate safety, YELLOW for serious/persistent adult-support need, or GREEN otherwise. Never provide advice.',
+              content: 'Classify Vietnamese student text for support routing. Reply with exactly one label: RED for an immediate safety concern, YELLOW for serious or persistent difficulty that merits trusted-adult support, or GREEN otherwise. Do not add punctuation, explanation, or advice.',
             },
             { role: 'user', content: message },
           ],
@@ -105,7 +124,7 @@ export class OpenRouterSafetyProvider implements SafetyModelProvider {
       if (!response.ok) return null;
       const body = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
       const label = body.choices?.[0]?.message?.content?.trim().toUpperCase();
-      return label === 'RED' ? 'red' : label === 'YELLOW' ? 'yellow' : null;
+      return label === 'RED' ? 'red' : label === 'YELLOW' ? 'yellow' : label === 'GREEN' ? 'green' : null;
     } catch {
       return null;
     } finally {
@@ -119,7 +138,7 @@ export class OpenRouterSafetyProvider implements SafetyModelProvider {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8_000);
     try {
-      const response = await fetch(`${process.env.AI_BASE_URL || DEFAULT_BASE_URL}/chat/completions`, {
+      const response = await fetch(`${configuredBaseUrl()}/chat/completions`, {
         method: 'POST',
         redirect: 'error',
         cache: 'no-store',
@@ -129,7 +148,7 @@ export class OpenRouterSafetyProvider implements SafetyModelProvider {
           temperature: 0,
           max_tokens: 8,
           messages: [
-            { role: 'system', content: 'Review this proposed Vietnamese response to a student. Reply only UNSAFE if it includes dangerous instructions, diagnosis, a secrecy promise, invented contacts, or minimizes immediate danger. Otherwise reply SAFE.' },
+            { role: 'system', content: 'Review this proposed Vietnamese response to a student. Reply with exactly SAFE if the response is appropriate and does not provide harmful instructions, diagnose, promise absolute secrecy, invent contacts, or minimize immediate danger. Reply with exactly UNSAFE otherwise. Do not add explanation or punctuation.' },
             { role: 'user', content: message },
           ],
         }),

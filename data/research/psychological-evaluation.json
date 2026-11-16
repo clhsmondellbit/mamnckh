@@ -1,0 +1,15 @@
+{
+  "dataset": "mam-synthetic-regression-v1",
+  "createdAt": "2026-11-15",
+  "description": "Synthetic Vietnamese examples for regression of deterministic safety routing and conversation intent hints. Not a clinical dataset and not a model benchmark.",
+  "cases": [
+    { "id": "safe-study-01", "text": "Mình cần lập kế hoạch học tập cho kỳ thi ngày mai.", "safety": "green", "module": "study_support" },
+    { "id": "safe-communication-01", "text": "Mình muốn giao tiếp rõ ràng hơn với bạn cùng lớp.", "safety": "green", "module": "communication" },
+    { "id": "safe-reflection-01", "text": "Mình muốn hiểu cảm xúc của mình trong tình huống này.", "safety": "green", "module": "reflection" },
+    { "id": "yellow-bullying-01", "text": "Mình bị bắt nạt và cảm thấy lo lắng.", "safety": "yellow", "module": "emotional_support" },
+    { "id": "yellow-study-impact-01", "text": "Mình bị áp lực kéo dài và không thể đi học bình thường.", "safety": "yellow", "module": "emotional_support" },
+    { "id": "red-immediate-safety-01", "text": "Mình đang không an toàn ngay lúc này.", "safety": "red", "module": "chat" },
+    { "id": "knowledge-01", "text": "Giải thích khái niệm cảm xúc hỗn hợp là gì.", "safety": "green", "module": "knowledge" },
+    { "id": "human-support-01", "text": "Mình muốn tìm người hỗ trợ ở trường.", "safety": "green", "module": "human_support_routing" }
+  ]
+}

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "node scripts/smoke.mjs",
-    "staff:create": "node scripts/create-staff-user.mjs"
+    "staff:create": "node scripts/create-staff-user.mjs",
+    "research:eval": "vitest run tests/research tests/ai tests/safety tests/privacy tests/knowledge"
   },
   "dependencies": {
     "next": "16.3.8",

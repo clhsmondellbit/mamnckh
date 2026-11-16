@@ -15,7 +15,7 @@ export default async function StaffDashboardPage() {
   const canManageDirectory = staffHasRole(actor, ['super_admin','admin']);
   const canSeeAppointments = staffHasRole(actor, ['super_admin','admin','school_counselor','teacher']);
   return <div className="page-shell space-y-9 py-10">
-    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow">Khu vực nhân sự · {actor.role}</p><h1 className="mt-2 text-3xl font-extrabold text-ink">Xin chào, {actor.displayName}</h1><p className="mt-2 max-w-2xl leading-7 text-slate-700">Chỉ xem yêu cầu được phân quyền. Nhật ký cá nhân và toàn bộ hội thoại AI của học sinh không nằm trong khu vực này.</p></div><div className="flex items-center gap-2"><Link href="/staff/settings" className="button-secondary">Cấu hình</Link><StaffLogoutButton /></div></div>
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow">Khu vực nhân sự · {actor.role}</p><h1 className="mt-2 text-3xl font-extrabold text-ink">Xin chào, {actor.displayName}</h1><p className="mt-2 max-w-2xl leading-7 text-slate-700">Chỉ xem yêu cầu được phân quyền. Nhật ký cá nhân và toàn bộ hội thoại AI của học sinh không nằm trong khu vực này.</p></div><div className="flex items-center gap-2"><Link href="/staff/settings" className="button-secondary">Cấu hình</Link>{staffHasRole(actor, ['super_admin','admin','technical_operator']) ? <Link href="/staff/research" className="button-secondary">Research Lab</Link> : null}<StaffLogoutButton /></div></div>
     {canManageDirectory ? <section><ContactManager /></section> : null}
     {canManageDirectory ? <StaffUserManager isSuperAdmin={actor.role === 'super_admin'} /> : null}
     {canManageDirectory ? <AuditList /> : null}

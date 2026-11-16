@@ -5,7 +5,8 @@ const links = [
   { href: '/check-in', label: 'Check-in' },
   { href: '/resources', label: 'Tài nguyên' },
   { href: '/tools', label: 'Công cụ' },
-  { href: '/journal', label: 'Nhật ký' },
+  { href: '/studio', label: 'Không gian riêng' },
+  { href: '/knowledge', label: 'Tri thức' },
   { href: '/support-center', label: 'Kết nối thầy cô' },
   { href: '/help', label: 'Hỗ trợ khẩn cấp' },
 ];

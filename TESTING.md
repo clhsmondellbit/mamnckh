@@ -1,27 +1,26 @@
-# TESTING — MẦM Phase 2
+# TESTING — MẦM Phase 02 delivery snapshot (2026-11-15)
 
-## Kết quả kiểm chứng tại thời điểm đóng gói
+## Kết quả kiểm chứng trong sandbox hiện tại
 
 | Kiểm tra | Trạng thái | Kết quả thực tế |
 |---|---|---|
-| Đọc source + kiểm tra cấu trúc | PASS | ZIP đầu vào được giải nén; cấu trúc, route, module và tài liệu được kiểm tra. |
-| TypeScript syntax-only parse (94 implementation/test `.ts`/`.tsx` files; 95 total including one `.d.ts`) | PASS | TypeScript 5.8.3 `transpileModule` parse-only scan; không có syntax diagnostics. Đây không phải typecheck.
-| Runtime utility smoke checks | PASS | 23 Node assertions: phone normalization/format, AI routing, process-local rate limit, AES-256-GCM round-trip/tamper rejection và scrypt password hash/verify. |
-| Unit test Vitest: phone/orchestrator | BLOCKED | `npm test -- --reporter=dot` exit 127 (`vitest: not found`); không thể cài do npm registry DNS không hoạt động. |
-| TypeScript (`npm run typecheck`) | BLOCKED | Script exit 2; dependencies và typings của dự án không được cài nên global `tsc` không thể resolve Next/React/Vitest/Node modules. |
-| ESLint (`npm run lint`) | BLOCKED | Script exit 127 (`eslint: not found`). |
-| Integration test PostgreSQL | BLOCKED | Không có PostgreSQL server/credentials được cung cấp trong sandbox. |
-| Appointment concurrency test | BLOCKED | Chưa có PostgreSQL instance để kiểm tra transaction và advisory lock end-to-end. |
-| AI provider | BLOCKED | Không có API key/provider credentials. |
-| Production build (`npm run build`) | BLOCKED | Script exit 127 (`next: not found`); không thể clean-install Next.js/SWC do npm registry trả `EAI_AGAIN`. |
-| Dependency audit (`npm audit --audit-level=high`) | BLOCKED | Exit 1 do `registry.npmjs.org` DNS `EAI_AGAIN`; không phải kết quả audit sạch. |
-| Desktop/mobile browser QA | BLOCKED | Không có browser automation/server build đã chạy trong môi trường này. |
-| Migration apply/rollback | BLOCKED | Không có PostgreSQL instance. Migration SQL đã được tạo nhưng chưa áp dụng vào DB thực. |
-| Archive content check | PASS | ZIP được tạo, `unzip -t` không lỗi; đã kiểm tra danh sách tệp không chứa `node_modules`, `.git`, `.next`, cache, `.env` thật hoặc credential file. Chỉ giữ `.env.example`. |
+| Repository / Git inspection | PASS | Branch `feat/mam-next`, HEAD `bc103fd`, tracking `origin/feat/mam-next`; source ZIP ban đầu có 126 tracked modifications và 4 untracked paths trước khi bắt đầu Phase 02. Không reset, clean, checkout, commit hoặc push. Tại thời điểm bàn giao vẫn có 126 tracked paths thay đổi và 23 untracked paths; toàn bộ được giữ nguyên. |
+| TypeScript syntax-only transpile | PASS | 114 file `.ts`/`.tsx` (loại trừ `.d.ts`, `.git`, `node_modules`, `.next`, output sinh tự động) được transpile bằng TypeScript global 5.8.3; 0 syntax diagnostics. Đây không phải semantic typecheck. |
+| Isolated runtime harness | PASS | 29/29 assertion cô lập: 7 passphrase/record-ID validation, 3 chunking, 8 safety classifications, 8 orchestration routes trên synthetic dataset và 3 encrypted-cookie checks (round-trip, session binding, ciphertext tampering). Harness transpile các module cần kiểm tra và mock `server-only`; không phải Vitest hoặc end-to-end test. |
+| `node --check scripts/smoke.mjs` | PASS | Script smoke test parse cú pháp thành công. |
+| `package.json` + `package-lock.json` JSON parse | PASS | Cả hai file parse được; lockfile không được sửa thủ công trong Phase 02. |
+| `npm ping --fetch-retries=0 --fetch-timeout=10000` | BLOCKED | Exit 1; DNS `EAI_AGAIN registry.npmjs.org`. Một lần `npm ci` trước đó đã timeout; chưa có clean install. |
+| `npm run typecheck` | BLOCKED | Exit 2; 2,843 diagnostics do thiếu dependencies và type definitions. Phần lớn là JSX intrinsic element / module-resolution / Node globals; còn 6 nullable diagnostics tại staff pages vì `next/navigation` không có type declarations nên `redirect()` không được nhận diện là `never`. Không thể coi đây là typecheck thành công hoặc kết luận mọi source typing hợp lệ. |
+| `npm run lint` | BLOCKED | Exit 127: `eslint: not found`. |
+| `npm test -- --reporter=dot` | BLOCKED | Exit 127: `vitest: not found`; các Vitest test files đã được thêm nhưng runner chưa cài. |
+| `npm run build` | BLOCKED | Exit 127: `next: not found`; không có production build. |
+| `npm audit --audit-level=high --fetch-retries=0 --fetch-timeout=10000` | BLOCKED | Exit 1 vì audit endpoint không truy cập được do `EAI_AGAIN`; không phải kết quả audit sạch. |
+| `node scripts/smoke.mjs` | BLOCKED | Exit 1, `ECONNREFUSED 127.0.0.1:3000`; không có app server đang chạy để nhận smoke test. |
+| PostgreSQL migration / API integration | BLOCKED | Không có database server/credentials. Migration `003` và các role/transaction/query cần staging verification. |
+| Browser / mobile / accessibility QA | BLOCKED | Không có Next build/server hoặc browser automation; Private Studio IndexedDB và Web Speech chưa được kiểm thử trên browser thật. |
+| AI provider end-to-end | BLOCKED | Không có API keys/provider thật; không tuyên bố đã kiểm thử dịch vụ production. |
 
-TypeScript syntax scan dùng `transpileModule` để parse 94 file triển khai/kiểm thử (95 file TypeScript tổng cộng nếu tính một `.d.ts`), không kiểm tra semantic types, module resolution hay generated Next types. `package.json` và root dependency metadata trong `package-lock.json` đã được đối chiếu và khớp.
-
-Không có kiểm tra bị ghi PASS nếu chưa thực sự chạy. Bản này chưa đủ điều kiện deploy public do dependency security advisory và các hạng mục BLOCKED bên trên. Unit test file đã được thêm không có nghĩa test runner đã execute.
+**Giới hạn:** 114-file syntax scan và 29 isolated runtime assertions không thay thế semantic typecheck, ESLint, Vitest, production build, DB integration, penetration test, browser QA hoặc đánh giá safeguarding bởi chuyên gia. Không deploy public cho học sinh trước khi xử lý P0/P1, cập nhật dependency, chạy full CI và xác minh quy trình an toàn với đơn vị có chuyên môn.
 
 ## Test commands for CI / staging
 
@@ -48,10 +47,10 @@ npm audit --audit-level=high
 10. Teacher/counselor chỉ đọc và cập nhật yêu cầu gắn đúng `support_contact_id`.
 11. Admin/role mutation có origin check; deactivated staff cookie bị vô hiệu ở lần request kế.
 12. Request PII được encrypt; DB không chứa plain note/phone/name; cancellation token chỉ lưu hash; đổi mật khẩu/quyền hoặc tự vô hiệu hóa liên kết hồ sơ sẽ tăng session version/thu hồi phiên cũ.
-16. Student có thể quản lý yêu cầu sau khi tải lại trang bằng request ID + cancellation token; hủy yêu cầu cần xác nhận trong UI.
-13. Journal/local data không xuất hiện trong `/api/chat` hoặc `/api/appointments` trừ khi người dùng nhập một phần nội dung mới và xác nhận riêng.
-14. AI: deterministic red path không gọi provider; provider failure không hạ safety level; forged assistant-history rejected.
-15. Retention endpoint từ chối thiếu/sai CRON_SECRET; cleanup xóa terminal >90d, giữ pending quá 180 ngày và confirmed có ngày hẹn quá 180 ngày.
+13. Student có thể quản lý yêu cầu sau khi tải lại trang bằng request ID + cancellation token; hủy yêu cầu cần xác nhận trong UI.
+14. Journal/local data không xuất hiện trong `/api/chat` hoặc `/api/appointments` trừ khi người dùng nhập một phần nội dung mới và xác nhận riêng.
+15. AI: deterministic red path không gọi provider; provider failure không hạ safety level; forged assistant-history rejected; client history chỉ có user turns và nằm trong giới hạn kích thước.
+16. Retention endpoint từ chối thiếu/sai CRON_SECRET; cleanup xóa terminal >90d, giữ pending quá 180 ngày và confirmed có ngày hẹn quá 180 ngày.
 
 ## Local browser QA checklist
 

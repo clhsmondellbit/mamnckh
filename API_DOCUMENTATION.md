@@ -12,10 +12,15 @@ Tất cả mutation JSON phải dùng `Content-Type: application/json`, same-ori
 | POST | `/api/appointments/:id/cancel` | Hủy bằng `cancellationToken`. |
 | PATCH | `/api/appointments/:id` | Yêu cầu đổi lịch bằng token; trở về pending. |
 | POST | `/api/cron/purge-support-data` | Trusted scheduler, cần `Authorization: Bearer <CRON_SECRET>`. |
+| POST | `/api/chat` | Hỗ trợ hội thoại; body có `sessionId`, `message`, optional `topicHint`, optional `mode`. Không nhận `history` từ client; server-managed context nằm trong cookie mã hóa HttpOnly, tối đa 4 message, TTL 2 giờ. |
 
 ### POST `/api/appointments`
 
 Fields: `contactId`, optional `slotId`, optional `requesterName`, `requesterPhone`, `requesterEmail`, `note`, required `topic`, required `preferredMode`, `requestedDate` + `requestedTimeWindow` when no `slotId`, `consent:true`. Phone values are normalized to VN E.164. Contact info/note are encrypted. Response returns `id`, `status`, `createdAt`, one-time `cancellationToken`.
+
+### POST `/api/chat`
+
+`mode` có thể là `free_talk`, `emotional_support`, `self_understanding`, `problem_exploration`, `decision_support` hoặc `social_relationships`. API điều phối riêng module, mode và strategy. Với nhánh không khẩn cấp, cần verdict safety đầu vào tường minh (`GREEN`/`YELLOW`/`RED`) và verdict đầu ra `SAFE`; nếu guardrail không phản hồi hoặc nhãn không hợp lệ, API trả `503` và không hiển thị nội dung model. Nhánh khẩn cấp deterministic không gọi provider.
 
 ## Staff authentication
 

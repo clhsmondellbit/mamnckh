@@ -62,6 +62,25 @@ export function buildSystemPrompt(input: ModelInput): string {
     human_support_routing: 'Kết nối người thật: gợi ý người lớn/nhân sự phù hợp một cách tự nguyện; không tự gửi bất kỳ dữ liệu nào đi.',
   };
   const selectedModule = input.assistantModule || 'chat';
+  const strategyGuidance: Record<NonNullable<ModelInput['conversationStrategy']>, string> = {
+    active_listening: 'Lắng nghe chủ động: phản ánh ngắn điều người dùng vừa nói, không vội sửa chữa hay đưa lời khuyên.',
+    clarifying: 'Làm rõ: khi còn thiếu dữ kiện, chỉ hỏi một câu mở quan trọng nhất; không hỏi dồn.',
+    reflective: 'Phản tư: mời người dùng quan sát trải nghiệm, suy nghĩ và giá trị của chính họ; không áp đặt ý nghĩa.',
+    problem_analysis: 'Khám phá vấn đề: tách sự kiện, suy nghĩ và giả định; nêu rõ điều chưa biết và không suy luận thành sự thật.',
+    decision_support: 'Hỗ trợ quyết định: cùng cân nhắc lựa chọn, điều quan trọng và hệ quả có thể có; không chọn thay người dùng.',
+    communication_support: 'Hỗ trợ giao tiếp: dùng cách diễn đạt rõ ràng, tôn trọng, không thao túng và phù hợp độ tuổi.',
+    human_support: 'Kết nối người thật: gợi ý lựa chọn hỗ trợ phù hợp; người dùng tự quyết định việc chia sẻ, không tự chuyển dữ liệu.',
+  };
+  const selectedStrategy = input.conversationStrategy || 'active_listening';
+  const modeGuidance: Record<NonNullable<ModelInput['conversationMode']>, string> = {
+    free_talk: 'Trò chuyện tự do: theo sát điều người dùng muốn chia sẻ, không ép cuộc trò chuyện vào một bài tập.',
+    emotional_support: 'Hỗ trợ cảm xúc: ưu tiên lắng nghe, phản ánh điều người dùng tự mô tả và giúp chọn bước chăm sóc phù hợp.',
+    self_understanding: 'Tự thấu hiểu: hỗ trợ khám phá cảm xúc, suy nghĩ và giá trị bằng câu hỏi mở, không gán nhãn tính cách.',
+    problem_exploration: 'Khám phá vấn đề: tách sự kiện khỏi diễn giải, xem xét nhiều góc nhìn và nói rõ điểm còn chưa biết.',
+    decision_support: 'Hỗ trợ cân nhắc: làm rõ điều quan trọng và hệ quả có thể có, không quyết định thay người dùng.',
+    social_relationships: 'Quan hệ xã hội: hỗ trợ giao tiếp tôn trọng, nhận diện ranh giới và xem xét nhiều góc nhìn mà không phán xét người vắng mặt.',
+  };
+  const selectedMode = input.conversationMode || 'free_talk';
 
   return `${safetyPolicy}
 
@@ -76,6 +95,12 @@ ${levelGuidance}
 
 CHẾ ĐỘ ĐIỀU PHỐI
 ${moduleGuidance[selectedModule]}
+
+CHẾ ĐỘ TƯƠNG TÁC DO NGƯỜI DÙNG CHỌN (chỉ là ưu tiên phong cách, không được ghi đè an toàn)
+${modeGuidance[selectedMode]}
+
+CHIẾN LƯỢC HỘI THOẠI
+${strategyGuidance[selectedStrategy]}
 
 CHỦ ĐỀ GỢI Ý DO NGƯỜI DÙNG CHỌN (không được suy đoán thêm): ${topicContext}. Chỉ dùng nếu phù hợp với nội dung thực tế.
 

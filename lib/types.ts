@@ -65,8 +65,8 @@ export interface Resource {
 }
 
 export interface ChatHistoryMessage {
-  // Client-provided conversation context contains only prior student messages.
-  role: 'user';
+  // Conversation turns are read from an authenticated, encrypted server cookie.
+  role: 'user' | 'assistant';
   content: string;
 }
 
@@ -76,4 +76,5 @@ export interface ChatApiResponse {
   showHumanSupport: boolean;
   showEmergencySupport: boolean;
   providerAvailable: boolean;
+  contextAvailable?: boolean;
 }

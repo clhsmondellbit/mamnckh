@@ -29,6 +29,7 @@ Tạo giá trị bằng `openssl rand -hex 32` cho AUTH/CRON và `openssl rand -
 ```bash
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/schema.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/migrations/002_school_support_center.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/migrations/003_knowledge_library.sql
 ```
 
 Backup DB trước migration trên môi trường đang dùng. `002` là migration phụ thêm; kiểm tra staging trước production.
@@ -72,3 +73,12 @@ Bảo vệ biến `$CRON_SECRET` trong secret manager và không log giá trị.
 Source hiện ghim Next.js `16.3.8`; không cập nhật package/lockfile trong đợt này vì npm registry DNS lỗi trong môi trường build. Xem `SECURITY_AUDIT.md`. Không public deploy trước khi nâng Next.js cùng `eslint-config-next`/lockfile theo advisory mới nhất rồi cài sạch, audit, typecheck, lint, test, build.
 
 Khi quản trị viên đặt lại mật khẩu nhân sự, `session_version` của tài khoản tăng lên và các phiên đã cấp trước đó sẽ không còn hợp lệ ở request tiếp theo.
+
+
+## Phase 02 optional settings
+
+- `AI_PROVIDER`: `openrouter` (default) or `openai-compatible`. The latter requires `AI_API_KEY`, `AI_BASE_URL` (HTTPS), and `AI_MODEL`. Safety assessment/output review still uses the separately configured OpenRouter safety provider, so `OPENROUTER_API_KEY` remains required for the current chat safety path.
+- `CONVERSATION_SECRET`: optional, 32+ random characters. When set (or when `AUTH_SECRET` is available), the chat API keeps a very small recent conversation window in an encrypted, HttpOnly, two-hour cookie scoped to `/api/chat`. No long-term chat archive is created. Without a valid secret, chat still works without server-managed context.
+- `DATABASE_URL`: the knowledge library uses the same PostgreSQL database independently of the optional staff dashboard. Apply migrations in order, including `003_knowledge_library.sql`. Staff-only content ingestion still requires `ENABLE_STAFF_DASHBOARD=true`, valid staff authentication and the appropriate role.
+
+The `/studio` private workspace stores encrypted records in browser IndexedDB using a passphrase-derived AES-GCM key. The passphrase is not recoverable; records do not sync across devices and are not sent to AI. This does not protect against a compromised browser, malicious extensions, XSS or an unlocked shared device. Exported JSON is decrypted and must be protected separately.

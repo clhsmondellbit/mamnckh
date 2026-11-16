@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/chat/route';
 
 function chatRequest(message: string, ip: string) {
@@ -11,6 +11,13 @@ function chatRequest(message: string, ip: string) {
 }
 
 describe('chat safety route', () => {
+  beforeEach(() => {
+    vi.stubEnv('OPENROUTER_API_KEY', '');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
   it('returns the red safety path before trying a chat provider', async () => {
     const response = await POST(chatRequest('Em muốn tự làm đau mình.', 'red-test'));
     const body = await response.json();
@@ -41,9 +48,10 @@ describe('chat safety route', () => {
     expect(body.showHumanSupport).toBe(true);
   });
 
-  it('keeps normal conversations usable through a transparent provider-failure fallback', async () => {
+  it('fails closed when the required input safety guardrail cannot return an explicit verdict', async () => {
     const response = await POST(chatRequest('Mình lo vì điểm kiểm tra thấp.', 'green-test'));
     const body = await response.json();
+    expect(response.status).toBe(503);
     expect(body.supportLevel).toBe('green');
     expect(body.providerAvailable).toBe(false);
     expect(body.message).toMatch(/chưa thể phản hồi/i);

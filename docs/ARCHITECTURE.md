@@ -23,11 +23,11 @@ MẦM hiện được tổ chức theo kiến trúc modular monolith trên Next.
 7. Kiểm tra đầu ra xác định và guardrail tùy chọn.
 8. Trả kết quả với `Cache-Control: no-store`.
 
-Client chỉ gửi tối đa 8 lượt người dùng trước đó, không gửi lại lượt assistant tự khai báo từ trình duyệt. Đổi lại, provider không nhận bản sao đầy đủ mọi câu trả lời trước đó. Chat được giữ trong bộ nhớ trình duyệt, không ghi vào database của MẦM.
+Client chỉ gửi `sessionId` và tin nhắn hiện tại; không gửi transcript assistant do trình duyệt tự khai báo. Khi `CONVERSATION_SECRET` (hoặc fallback `AUTH_SECRET`) hợp lệ, server tạo cookie AES-256-GCM `HttpOnly`, `SameSite=Strict`, giới hạn path `/api/chat`, chứa tối đa 4 message gần nhất và hết hạn sau 2 giờ. Provider nhận tối đa 4 message ngữ cảnh trước đó cùng tin nhắn mới. Không có transcript database hoặc đồng bộ đa thiết bị; khi không cấu hình secret, chat chạy không có lịch sử server-managed.
 
 ## Ranh giới dữ liệu
 
-- Khi bật AI, tin nhắn hiện tại và tối đa 8 lượt người dùng trước được gửi tới provider được cấu hình.
+- Khi bật AI, tin nhắn hiện tại và tối đa 4 message trước đó lấy từ cookie mã hóa do server tạo được gửi tới provider được cấu hình.
 - Guardrail có thể gửi nội dung hiện tại và câu trả lời dự kiến trong các request riêng.
 - Check-in không được lưu.
 - Yêu cầu handoff chỉ lưu các trường học sinh tự gửi và không kèm transcript.

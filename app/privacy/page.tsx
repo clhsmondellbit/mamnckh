@@ -7,11 +7,11 @@ export default function PrivacyPage() {
         <div className="mt-7 space-y-6 leading-7 text-slate-700">
           <section>
             <h2 className="text-xl font-bold text-ink">MẦM được thiết kế để giảm thu thập dữ liệu</h2>
-            <p className="mt-2">Bạn có thể trò chuyện với tư cách khách. MẦM không yêu cầu tên thật cho những cuộc trò chuyện thông thường. Lịch sử chat đang hiển thị chỉ nằm trong bộ nhớ của trang và sẽ mất khi tải lại hoặc đóng trang; ứng dụng không lưu transcript này vào cơ sở dữ liệu của MẦM.</p>
+            <p className="mt-2">Bạn có thể trò chuyện với tư cách khách. MẦM không yêu cầu tên thật cho những cuộc trò chuyện thông thường. Lịch sử chat đang hiển thị trong giao diện nằm trong bộ nhớ trang và có thể mất khi tải lại/đóng trang; ứng dụng không lưu transcript vào cơ sở dữ liệu của MẦM. Nếu được cấu hình `CONVERSATION_SECRET`, API có thể giữ tối đa 4 message gần nhất trong cookie mã hóa HttpOnly, gắn với phiên và tự hết hạn sau 2 giờ.</p>
           </section>
           <section>
             <h2 className="text-xl font-bold text-ink">Khi AI được bật</h2>
-            <p className="mt-2">Nếu đơn vị vận hành cấu hình nhà cung cấp AI, tin nhắn hiện tại cùng tối đa 8 lượt chia sẻ trước đó của bạn sẽ được gửi tới nhà cung cấp đó để xử lý. Một số nội dung cũng có thể được gửi tới mô hình guardrail của cùng cấu hình để rà soát an toàn đầu vào và đầu ra. Nhà cung cấp AI có chính sách xử lý dữ liệu riêng; không gửi thông tin mà bạn không muốn chia sẻ với nhà cung cấp bên ngoài. Nếu chưa cấu hình AI, MẦM không giả lập câu trả lời do AI tạo ra.</p>
+            <p className="mt-2">Nếu đơn vị vận hành cấu hình nhà cung cấp AI, tin nhắn hiện tại cùng tối đa 4 message ngữ cảnh trước đó trong cookie server-managed sẽ được gửi tới nhà cung cấp đó để xử lý. Một số nội dung cũng có thể được gửi tới mô hình guardrail của cùng cấu hình để rà soát an toàn đầu vào và đầu ra. Nhà cung cấp AI có chính sách xử lý dữ liệu riêng; không gửi thông tin mà bạn không muốn chia sẻ với nhà cung cấp bên ngoài. Nếu chưa cấu hình AI, MẦM không giả lập câu trả lời do AI tạo ra.</p>
           </section>
           <section>
             <h2 className="text-xl font-bold text-ink">Không nên gửi</h2>

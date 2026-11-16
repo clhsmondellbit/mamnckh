@@ -4,23 +4,32 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { SupportPanel } from '@/components/safety/support-panel';
-import { topicShortcuts } from '@/components/topics';
 import type { ChatApiResponse, SupportLevel, SupportTopic } from '@/lib/types';
+import type { ConversationMode } from '@/lib/ai/types';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string; level?: SupportLevel };
 type ChatSession = { id: string; title: string; messages: Message[]; isReady: boolean };
 
-const welcomeText = `Chào bạn tuyệt vời! 🌟 Mình là **MẦM** – Bạn đồng hành nhỏ xinh luôn sẵn sàng lắng nghe đây 🌱. 
+const welcomeText = `Chào bạn, mình là **MẦM** 🌱 — công cụ hỗ trợ bước đầu về cảm xúc và đời sống học đường. Bạn có thể chia sẻ điều mình thấy thoải mái. Mình có thể giúp bạn gọi tên vấn đề, cân nhắc một vài góc nhìn hoặc tìm bước tiếp theo.
 
-Hôm nay thế giới của bạn thế nào? Có chuyện gì vui muốn kể, hay có góc nào đang nặng lòng cần chia sẻ không? Cứ thoải mái trút bầu tâm sự với mình nhé, tụi mình cùng gỡ rối nha! ✨`;
+MẦM không thay thế người lớn đáng tin cậy hay chuyên gia. Bạn không cần gửi tên thật, địa chỉ, mật khẩu hoặc thông tin riêng tư để bắt đầu.`;
 
 const welcome: Message = {
   id: 'welcome',
   role: 'assistant',
   content: welcomeText,
 };
+
+const conversationModes: Array<{ value: ConversationMode; label: string }> = [
+  { value: 'free_talk', label: 'Trò chuyện tự do' },
+  { value: 'emotional_support', label: 'Hỗ trợ cảm xúc' },
+  { value: 'self_understanding', label: 'Tự thấu hiểu' },
+  { value: 'problem_exploration', label: 'Khám phá vấn đề' },
+  { value: 'decision_support', label: 'Cân nhắc lựa chọn' },
+  { value: 'social_relationships', label: 'Quan hệ xã hội' },
+];
 
 const optionsList = [
   "📚 Học tập – thi cử",
@@ -40,11 +49,12 @@ export function ChatExperience() {
   const params = useSearchParams();
   const topicParam = params.get('topic') as SupportTopic | null;
   
+  const [initialSessionId] = useState<string>(() => createSessionId());
   const [sessions, setSessions] = useState<ChatSession[]>([
-    { id: 'session-1', title: '✨ Cuộc trò chuyện mới', messages: [welcome], isReady: true }
+    { id: initialSessionId, title: '✨ Cuộc trò chuyện mới', messages: [welcome], isReady: true }
   ]);
   
-  const [currentSessionId, setCurrentSessionId] = useState<string>('session-1');
+  const [currentSessionId, setCurrentSessionId] = useState<string>(initialSessionId);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
   const currentSession = sessions.find((s) => s.id === currentSessionId) || sessions[0];
@@ -54,13 +64,11 @@ export function ChatExperience() {
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<SupportTopic | undefined>(topicParam || undefined);
+  const [selectedMode, setSelectedMode] = useState<ConversationMode>('free_talk');
   const [error, setError] = useState<string | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
 
-  const selectedTopicLabel = useMemo(
-    () => topicShortcuts.find((topic) => topic.topic === selectedTopic)?.label,
-    [selectedTopic],
-  );
+
 
   useEffect(() => {
     const messagesElement = messagesRef.current;
@@ -86,6 +94,7 @@ export function ChatExperience() {
     setSessions((prev) => [newSession, ...prev]);
     setCurrentSessionId(newId);
     setSelectedTopic(undefined);
+    setSelectedMode('free_talk');
   }
 
   function selectSession(id: string) {
@@ -114,8 +123,6 @@ export function ChatExperience() {
     if (!message || isSending) return;
 
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: message };
-    const history = messages.slice(-8).filter((item) => item.id !== 'welcome').map(({ role, content }) => ({ role, content }));
-    
     setSessions((prev) =>
       prev.map((s) =>
         s.id === currentSessionId
@@ -136,7 +143,7 @@ export function ChatExperience() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: currentSessionId, message, topicHint: selectedTopic, history }),
+        body: JSON.stringify({ sessionId: currentSessionId, message, topicHint: selectedTopic, mode: selectedMode }),
       });
       const body = (await response.json()) as ChatApiResponse | { error?: string };
       if (!('message' in body)) throw new Error(body.error || 'Không thể gửi tin nhắn lúc này.');
@@ -214,19 +221,26 @@ export function ChatExperience() {
             {sessions.map((item) => (
               <div
                 key={item.id}
-                onClick={() => selectSession(item.id)}
-                className={`group flex items-center justify-between w-full rounded-xl px-3 py-2 text-xs font-semibold transition cursor-pointer ${
+                className={`group flex items-center gap-1 w-full rounded-xl px-2 py-1.5 text-xs font-semibold transition ${
                   item.id === currentSessionId
                     ? 'bg-[#2d4a22] text-white shadow-xs'
                     : 'text-[#38582d] hover:bg-[#e4efdf]'
                 }`}
               >
-                <span className="truncate flex-1">{item.title}</span>
                 <button
                   type="button"
-                  onClick={(e) => deleteSession(e, item.id)}
+                  onClick={() => selectSession(item.id)}
+                  aria-current={item.id === currentSessionId ? 'page' : undefined}
+                  className="min-w-0 flex-1 truncate rounded-lg px-1 py-1 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7c9a70]"
+                >
+                  {item.title}
+                </button>
+                <button
+                  type="button"
+                  onClick={(event) => deleteSession(event, item.id)}
+                  aria-label={`Xóa ${item.title}`}
                   title="Xóa cuộc trò chuyện"
-                  className={`ml-1.5 p-0.5 rounded opacity-0 group-hover:opacity-100 transition ${
+                  className={`shrink-0 rounded p-1 transition focus-visible:opacity-100 focus-visible:outline-2 ${
                     item.id === currentSessionId ? 'text-white hover:bg-white/20' : 'text-[#38582d] hover:bg-black/5'
                   }`}
                 >
@@ -249,11 +263,11 @@ export function ChatExperience() {
             <section className="card mx-auto max-w-xl rounded-3xl border border-[#e2ebd8] bg-white p-6 shadow-soft text-center sm:text-left">
               <div className="mx-auto sm:mx-0 grid size-12 place-items-center rounded-2xl bg-[#e4efdf] text-2xl mb-3">🌱</div>
               <h2 className="text-xl font-extrabold text-[#2c4a24]">Chào mừng bạn đến với MẦM!</h2>
-              <p className="mt-2 text-xs leading-6 text-slate-600">Đây là không gian an toàn, thân thiện để bạn chia sẻ mọi điều trong cuộc sống học đường. MẦM luôn ở đây lắng nghe và đồng hành cùng bạn nha! 💚</p>
+              <p className="mt-2 text-xs leading-6 text-slate-600">Đây là nơi bạn có thể bắt đầu chia sẻ trong phạm vi mình thấy thoải mái. MẦM có thể giúp bạn sắp xếp suy nghĩ và tìm bước tiếp theo phù hợp.</p>
               <div className="mt-3 rounded-2xl bg-[#f2f8f0] p-3.5 text-xs text-[#3a5a30] space-y-1 font-medium">
                 <p>💡 <strong>Góc nhỏ lưu ý:</strong> Đừng gửi mật khẩu, mã OTP hay thông tin cá nhân bảo mật nhé.</p>
               </div>
-              <button type="button" onClick={beginChat} className="inline-flex items-center justify-center rounded-2xl bg-[#2d4a22] px-5 py-3 font-bold text-white transition hover:bg-[#1f3617] mt-5 w-full text-xs cursor-pointer">Bắt đầu trò chuyện ngay thôi! 🚀</button>
+              <button type="button" onClick={beginChat} className="inline-flex items-center justify-center rounded-2xl bg-[#2d4a22] px-5 py-3 font-bold text-white transition hover:bg-[#1f3617] mt-5 w-full text-xs cursor-pointer">Bắt đầu trò chuyện</button>
             </section>
           </div>
         ) : (
@@ -326,6 +340,10 @@ export function ChatExperience() {
               {lastLevel === 'red' ? <div className="mb-2.5"><SupportPanel emergency /></div> : null}
               {lastLevel === 'yellow' ? <div className="mb-2.5"><SupportPanel /></div> : null}
               <form onSubmit={submit}>
+                <label htmlFor="chat-mode" className="mb-1 block text-[10px] font-semibold text-slate-500">Cách MẦM hỗ trợ</label>
+                <select id="chat-mode" value={selectedMode} onChange={(event) => setSelectedMode(event.target.value as ConversationMode)} disabled={isSending} className="mb-2 rounded-xl border border-[#e2ebd8] bg-white px-3 py-2 text-xs text-[#2c4a24] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2d4a22]">
+                  {conversationModes.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
+                </select>
                 <label htmlFor="chat-message" className="sr-only">Viết điều muốn chia sẻ</label>
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-300 bg-white p-2 transition focus-within:border-[#2d4a22] focus-within:ring-1 focus-within:ring-[#2d4a22]/20 shadow-xs">
                   <textarea

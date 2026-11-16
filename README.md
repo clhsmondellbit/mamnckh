@@ -12,9 +12,9 @@ Bản này bổ sung School Support Center có danh bạ lưu trong PostgreSQL, 
 
 ## Chức năng hiện có
 
-- Chat khách; chỉ gửi các lượt người dùng trước đó làm ngữ cảnh, tối đa 8 lượt; không gửi lịch sử assistant do trình duyệt tự khai báo.
-- Safety checks trước/sau khi gọi AI; tình huống nghiêm trọng dùng nhánh hướng dẫn xác định và không chờ AI.
-- AI Orchestrator chọn prompt chuyên biệt trong một provider chung: chat, hỗ trợ học tập, cảm xúc, phản tư, giao tiếp, kiến thức, hướng dẫn tìm người hỗ trợ.
+- Chat khách với sáu chế độ tương tác; client chỉ gửi tin nhắn hiện tại và session ID, server có thể giữ tối đa 4 message ngữ cảnh trong cookie mã hóa HttpOnly hết hạn sau 2 giờ.
+- Safety checks trước/sau khi gọi AI; yêu cầu verdict tường minh và fail-closed khi guardrail lỗi; tình huống nghiêm trọng dùng nhánh xác định, không chờ AI.
+- AI Orchestrator multi-signal chọn module/strategy prompt chuyên biệt: chat, học tập, cảm xúc, phản tư, giao tiếp, kiến thức, hướng dẫn tìm người hỗ trợ; chat provider hỗ trợ OpenRouter hoặc adapter OpenAI-compatible, còn safety provider hiện vẫn phụ thuộc OpenRouter.
 - Check-in cảm xúc không tạo hồ sơ tâm lý.
 - Thư viện nội dung hiện có, tìm kiếm không phân biệt dấu và bookmark lưu cục bộ.
 - Công cụ grounding, chia nhỏ nhiệm vụ, phản tư ngắn; không tự chấm điểm học sinh.
@@ -23,13 +23,14 @@ Bản này bổ sung School Support Center có danh bạ lưu trong PostgreSQL, 
 - Counselor/staff dashboard: hàng đợi yêu cầu theo hồ sơ được phân công, mở slot, xác nhận/từ chối/hoàn tất.
 - Admin: quản lý hồ sơ và tài khoản nhân sự, xác minh/thu hồi xác minh, audit log.
 
-Các phần chưa triển khai đầy đủ (CMS nội dung, RAG, push notifications, nhắc lịch, PWA, streaming, nhiều hơn 8 lượt ngữ cảnh, đánh giá từng câu trả lời AI, xác minh SMS OTP) được liệt kê trong `FEATURES.md`; không giả lập bằng UI.
+Các phần chưa triển khai đầy đủ (CMS nội dung, vector RAG và RAG-grounded chat, push notifications, nhắc lịch, PWA, streaming, memory dài hạn, đánh giá từng câu trả lời AI, xác minh SMS OTP) được liệt kê trong `FEATURES.md`; không giả lập bằng UI.
 
 ## Công nghệ
 
 - Next.js App Router, React, TypeScript.
 - PostgreSQL qua `postgres` tagged-template queries.
-- AI provider API tương thích OpenAI/OpenRouter (tùy cấu hình).
+- OpenRouter + một adapter chat tương thích OpenAI API (cấu hình qua environment; guardrail hiện vẫn phụ thuộc OpenRouter).
+- Web Crypto (PBKDF2 + AES-GCM) và IndexedDB cho Private Studio local-first; Web Speech API cho nhận dạng/đọc văn bản khi trình duyệt hỗ trợ.
 - Zod validation, Vitest.
 - AES-256-GCM cho dữ liệu riêng tư của yêu cầu hỗ trợ; scrypt cho mật khẩu nhân sự.
 
@@ -81,6 +82,7 @@ Trên database mới, chạy lần lượt:
 ```bash
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/schema.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/migrations/002_school_support_center.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/migrations/003_knowledge_library.sql
 ```
 
 Migration `002` tạo các bảng `staff_users`, `school_support_contacts`, `school_support_slots`, `school_support_appointments` và các audit logs. Migration là additive đối với `support_requests` hiện có. Sao lưu và chạy thử trên staging trước production.
@@ -115,7 +117,9 @@ Chi tiết tại `SCHOOL_SUPPORT_CENTER.md` và `COUNSELOR_SETUP.md`.
 - `/chat` — AI Chat.
 - `/check-in` — Check-in tự nguyện.
 - `/tools` — Công cụ hỗ trợ học sinh.
-- `/journal` — Nhật ký local-only.
+- `/studio` — Không gian riêng tư mã hóa trên thiết bị (Story Journal, reflection, memory và các công cụ phát triển).
+- `/journal` — Đường dẫn cũ, chuyển hướng an toàn sang `/studio` để người dùng tự nhập nhật ký legacy.
+- `/knowledge` — Tìm kiếm tài liệu tâm lý đã được nhân sự xác minh và xuất bản.
 - `/resources` — Thư viện kiến thức hiện có.
 - `/support-center` — Danh bạ đã xác minh, gọi điện và yêu cầu hỗ trợ.
 - `/help` — Hướng dẫn tìm sự trợ giúp.
@@ -131,7 +135,7 @@ npm run build
 npm audit --audit-level=high
 ```
 
-Không đánh dấu PASS nếu chưa thực sự chạy. Tình trạng lần kiểm tra bàn giao được ghi trong `TESTING.md`. E2E smoke yêu cầu ứng dụng đã build/chạy và được trỏ tới bởi `APP_URL`.
+Không đánh dấu PASS nếu chưa thực sự chạy. Tình trạng lần kiểm tra bàn giao được ghi trong `TESTING.md`; tổng kết triển khai xem `PHASE_01_REPORT.md`. E2E smoke yêu cầu ứng dụng đã build/chạy và được trỏ tới bởi `APP_URL`.
 
 ## Bảo mật và quyền riêng tư
 
@@ -144,3 +148,13 @@ Không đánh dấu PASS nếu chưa thực sự chạy. Tình trạng lần ki�
 - Cấu hình scheduler hằng ngày để gọi retention endpoint; không cấu hình scheduler thì cleanup không tự chạy.
 
 Xem `SECURITY_AUDIT.md`, `docs/PRIVACY.md`, `docs/SAFETY.md`.
+
+
+## Phase 02 modules
+
+- `/studio`: opt-in private workspace. Story Journal, Memory Graph, Daily Reflection, Guided Journeys, Scenario Lab, Perspective Explorer, Insight Studio, Conversation Debrief, Personal Toolkit and browser speech controls share a passphrase-encrypted IndexedDB vault. Private records are not sent to AI.
+- `/knowledge`: source-attributed psychological knowledge search backed by PostgreSQL full-text retrieval. It only returns published documents with a verification timestamp. Staff content ingestion is available through `POST /api/staff/knowledge` for authorized content roles.
+- Chat context is optionally retained in a small encrypted HttpOnly cookie for two hours. Client-supplied assistant history is not accepted as trusted context.
+- `npm run research:eval`: synthetic, local regression suite covering selected AI routing and safety behaviors. This is not a model-vs-model benchmark.
+
+Apply `sql/migrations/003_knowledge_library.sql` after the existing school-support migration to enable the knowledge library. See `ENV_SETUP.md` and `docs/PHASE_02.md` for limitations and setup notes.

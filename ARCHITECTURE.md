@@ -46,11 +46,15 @@ Teacher/counselor cần `support_contact_id`. API enforce role và scope ở ser
 
 ## 7. AI orchestration
 
-`orchestrateSupportRequest()` là rule-based routing tạm thời cho một provider chung. Các module chuyên biệt dùng chung Context/Safety/Provider flow; module chỉ điều chỉnh hướng dẫn prompt. Không tạo profile người học; module/topic không được lưu vào database. History gửi đi chỉ gồm user turns do frontend gửi, tối đa 8 lượt; server từ chối assistant roles trong history. Chưa có persistent summarization, RAG hoặc multi-provider failover.
+`orchestrateSupportRequest()` tạo routing hint bằng cách chấm điểm nhiều nhóm tín hiệu tiếng Việt thay vì dừng ở keyword đầu tiên khớp. Người dùng có thể chọn một trong sáu chế độ tương tác: trò chuyện tự do, hỗ trợ cảm xúc, tự thấu hiểu, khám phá vấn đề, cân nhắc lựa chọn và quan hệ xã hội. Hệ thống tách `module`, `mode` và `strategy` (lắng nghe, làm rõ, phản tư, phân tích, hỗ trợ quyết định, giao tiếp hoặc kết nối người thật). Đây là hướng dẫn prompt có thể sai, không phải đánh giá tâm lý hay hồ sơ cá nhân. Module/mode/topic không được lưu vào database. Client chỉ gửi `sessionId` và tin nhắn hiện tại. Lịch sử trước đó được giữ tối đa 4 message trong cookie AES-256-GCM do server tạo, `HttpOnly`, `SameSite=Strict`, giới hạn path `/api/chat`, TTL 2 giờ; client không gửi assistant transcript và API không nhận trường `history`. Đây là context ngắn hạn, không phải server-side long-term memory hay transcript database. Chưa có persistent summarization, vector RAG hoặc multi-provider failover.
+
+### Safety gate
+
+Với nhánh không khẩn cấp, API yêu cầu guardrail đầu vào trả về rõ `GREEN`, `YELLOW` hoặc `RED`; lỗi, nhãn không hợp lệ hoặc timeout (`null`) dẫn tới HTTP 503 và không gọi chat model. Đầu ra chỉ được hiển thị nếu deterministic validator chấp nhận và guardrail đầu ra trả rõ `SAFE`. `UNSAFE`, nhãn không rõ hoặc lỗi dịch vụ đều bị chặn. Nhánh deterministic khẩn cấp tiếp tục phản hồi mà không phụ thuộc provider. Cách xử lý này ưu tiên an toàn nhưng làm giảm khả dụng khi safety provider không sẵn sàng; vận hành cần cấu hình provider và giám sát riêng.
 
 ## 8. Browser-only data
 
-Journal và một số tùy chọn/bookmarks lưu ở localStorage; không truyền vào API chat hoặc support requests. Đây không phải kho lưu trữ an toàn cho thiết bị dùng chung; người học cần xóa dữ liệu local khi dùng máy chung. Chat sessions giữ trong React memory và mất khi đóng/tải lại trang.
+Journal legacy và một số bookmarks vẫn có thể ở localStorage; người dùng phải chủ động nhập journal cũ vào Private Studio và lựa chọn riêng việc xóa bản legacy. Bản ghi mới trong Private Studio được mã hóa AES-GCM và lưu ciphertext trong IndexedDB, không gửi vào AI. Đây là kho local-only, không chống được XSS/extension độc hại hoặc thiết bị đang mở khóa. Transcript đang hiển thị trong UI giữ trong React memory; server context cookie mã hóa có thể duy trì tối đa 4 message trong 2 giờ.
 
 ## 9. Retention and operations
 
@@ -58,4 +62,4 @@ Retention helper xóa appointment `completed/cancelled/rejected` sau 90 ngày k�
 
 ## 10. Limits
 
-Chưa có CMS kiến thức, RAG, notifications/push/reminders, PWA, real-time video/chat, schedule sync với calendar của giáo viên, staff SSO/MFA, shared Redis rate-limit, multi-instance test, observability integration hoặc key rotation tự động. `next@16.3.8` còn là release blocker ghi trong `SECURITY_AUDIT.md`.
+Chưa có CMS kiến thức, RAG, long-term memory, lưu check-in/timeline/report bền vững, personal pattern insights, notifications/push/reminders, PWA, real-time video/chat, schedule sync với calendar của giáo viên, staff SSO/MFA, shared Redis rate-limit, multi-instance test, observability integration hoặc key rotation tự động. Công cụ tự phản tư mới chỉ giữ dữ liệu trong trạng thái trang hiện tại và không gửi đến AI/database. `next@16.3.8` và `react@19.0.0` vẫn là release blocker; xem `SECURITY_AUDIT.md`.
